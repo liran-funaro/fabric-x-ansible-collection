@@ -169,6 +169,17 @@ argument_specs:
         default: 3000
         description:
           - Sets the Grafana web port.
+      grafana_bind_address: &grafana_bind_address
+        type: str
+        default: 0.0.0.0
+        description:
+          - Sets the address Grafana listens on.
+          - Defaults to C(0.0.0.0), Grafana's own default, which is reachable from anywhere the
+            host firewall and cloud security group allow.
+          - Set to C(127.0.0.1) to restrict Grafana to the loopback interface, so it is reachable
+            only from the host itself or through an SSH tunnel. Recommended whenever the host is
+            internet-facing, since the admin credentials come from C(grafana_username) and
+            C(grafana_password) and are often left at their sample values.
       grafana_use_k8s: &grafana_use_k8s
         type: bool
         default: false
@@ -310,6 +321,7 @@ argument_specs:
       grafana_username: *grafana_username
       grafana_password: *grafana_password
       grafana_web_port: *grafana_web_port
+      grafana_bind_address: *grafana_bind_address
       grafana_remote_config_dir: *grafana_remote_config_dir
       remote_config_dir: *remote_config_dir
       grafana_container_config_dir: *grafana_container_config_dir

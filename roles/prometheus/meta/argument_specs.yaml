@@ -128,6 +128,17 @@ argument_specs:
         default: 9090
         description:
           - TCP port exposed by Prometheus and used by the container listener and Kubernetes Services.
+      prometheus_bind_address: &prometheus_bind_address
+        type: str
+        default: ""
+        description:
+          - Sets the address Prometheus listens on, prepended to C(--web.listen-address).
+          - Defaults to an empty string, giving C(--web.listen-address=:9090), i.e. all
+            interfaces. This preserves the previous behaviour.
+          - Set to C(127.0.0.1) to restrict Prometheus to the loopback interface, so its API and
+            web UI are reachable only from the host itself or through an SSH tunnel. Only safe
+            when every Prometheus client (Grafana, and anything scraping its API) runs on the
+            same host.
       prometheus_use_k8s: &prometheus_use_k8s
         type: bool
         default: false
@@ -284,6 +295,7 @@ argument_specs:
       prometheus_web_config_file: *prometheus_web_config_file
       prometheus_http_config_file: *prometheus_http_config_file
       prometheus_port: *prometheus_port
+      prometheus_bind_address: *prometheus_bind_address
       prometheus_use_tls: *prometheus_use_tls
 
   k8s/start:
