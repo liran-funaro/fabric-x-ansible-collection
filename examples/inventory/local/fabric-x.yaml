@@ -243,6 +243,15 @@ all:
               children:
                 fabric_x_committer:
                   vars:
+                    # Run the committer components as host binaries instead of containers.
+                    committer_use_bin: true
+                    # Take the binary from the control node's bin dir...
+                    bin_build_on_control_node: true
+                    # ...and neither build nor `go install` it. Setting this to false rather
+                    # than leaving it undefined makes playbooks/committer/binaries.yaml select
+                    # neither the install branch (which needs it undefined) nor the build
+                    # branch (which needs it true), so the remote play transfers only.
+                    committer_build_bin: false
                     committer_use_tls: true
                     committer_use_mtls: true
                     committer_monitoring_mtls_clients:
