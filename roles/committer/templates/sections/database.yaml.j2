@@ -53,7 +53,7 @@ database:
   # of it (e.g., 1x-2x the number of tservers), so each tserver gets an equal share of tablets.
   # For example, with 3 tservers, set table-pre-split-tablets to 3 or 6.
   # When the underlying database is PostgreSQL, this setting is automatically ignored even if set.
-  table-pre-split-tablets: {{ hostvars[yugabyte_cluster] | map('extract', hostvars) | selectattr('yugabyte_component_type', '==', 'tablet') | length | default(0) }}
+  table-pre-split-tablets: {{ yugabyte_cluster | map('extract', hostvars) | selectattr('yugabyte_component_type', '==', 'tablet') | length | default(0) }}
 {% if hostvars[yugabyte_cluster | first].yugabyte_use_tls is defined and hostvars[yugabyte_cluster | first].yugabyte_use_tls %}
   tls:
     # TLS mode for database connections: 'none' (no TLS) or 'tls' (server auth with CA verification).
