@@ -370,10 +370,16 @@ all:
         prometheus:
           prometheus_port: 9090
           prometheus_use_tls: true
+          # Loopback only: this host is internet-facing. Reach it via an SSH tunnel.
+          # Safe here because the only Prometheus client is Grafana on the same host.
+          prometheus_bind_address: 127.0.0.1
         grafana:
           grafana_username: admin
           grafana_password: adminPWD
           grafana_web_port: 3000
+          # Loopback only: Grafana runs on the dev machine instead (see grafana-local/).
+          # Leaving this reachable would expose the admin/adminPWD UI publicly.
+          grafana_bind_address: 127.0.0.1
           prometheus_host: prometheus
           loki_host: loki
           grafana_use_tls: true

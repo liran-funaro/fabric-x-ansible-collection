@@ -15,7 +15,7 @@
     container_name: "{{ prometheus_container_name }}"
     container_image: "{{ prometheus_image }}"
     container_command: >-
-      --web.listen-address=:{{ prometheus_port }}
+      --web.listen-address={{ prometheus_bind_address }}:{{ prometheus_port }}
       --config.file={{ prometheus_container_config_dir }}/{{ prometheus_config_file }}
       --storage.tsdb.path={{ prometheus_container_data_dir }}
       --web.console.libraries=/usr/share/prometheus/console_libraries
