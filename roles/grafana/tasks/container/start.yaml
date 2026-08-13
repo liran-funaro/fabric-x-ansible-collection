@@ -10,6 +10,7 @@
       GF_SECURITY_ADMIN_USER: "{{ grafana_username }}"
       GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_password }}"
       GF_SERVER_HTTP_PORT: "{{ grafana_web_port | string }}"
+      GF_SERVER_HTTP_ADDR: "{{ grafana_bind_address }}"
 
 - name: Set Grafana environment variables for TLS
   vars:
