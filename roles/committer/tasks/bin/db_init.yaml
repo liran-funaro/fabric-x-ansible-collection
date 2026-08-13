@@ -1,0 +1,19 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+- name: Initialize the committer state database with the {{ committer_bin_name }} binary
+  vars:
+    # Not a long-running service: run it in the foreground and let it exit, rather than
+    # leaving a tmux session behind as bin/start does for the components.
+    bin_command: >-
+      {{ committer_bin_name }} init-db
+      --config={{ committer_remote_config_dir }}/{{ committer_config_file }}
+      --timeout={{ committer_db_init_timeout }}
+    bin_run_with_tmux: false
+    bin_collect_logs: false
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.bin
+    tasks_from: start

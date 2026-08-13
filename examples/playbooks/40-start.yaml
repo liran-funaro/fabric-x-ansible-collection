@@ -22,6 +22,12 @@
 - name: Start Fabric-X Orderer
   ansible.builtin.import_playbook: hyperledger.fabricx.orderer.start
 
+# Must run after the PostgreSQL/YugabyteDB plays above and before the committer starts: from
+# #617 onwards the schema is no longer created implicitly at startup, and the validator cannot
+# open its RPC port until it exists.
+- name: Initialize the Hyperledger Fabric-X Committer state database
+  ansible.builtin.import_playbook: hyperledger.fabricx.committer.db_init
+
 - name: Start Hyperledger Fabric-X Committer
   ansible.builtin.import_playbook: hyperledger.fabricx.committer.start
 
