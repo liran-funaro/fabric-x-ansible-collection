@@ -80,6 +80,39 @@ orderer-client:
 {% endif %}
 {% endif %}
 
+{% if loadgen_queries_rate is defined and (loadgen_queries_rate | float) > 0 %}
+# ---------------------------------------------------------------------------
+# Query Service Client Settings
+# ---------------------------------------------------------------------------
+# Connection used to fetch committed read versions for the subset of each transaction's reads
+# selected by load-profile.transaction.queries-rate. One load-balanced connection is dialed per
+# worker, round-robining across the endpoints below. Required whenever queries-rate > 0.
+query-client:
+  # Query-service endpoints. List several instances to spread the query load.
+  endpoints:
+{% for query_host in committer_query_service_hosts %}
+    - {{ hostvars[query_host].ansible_host }}:{{ hostvars[query_host].committer_rpc_port }}
+{% endfor %}
+{% if (hostvars[committer_query_service_hosts | first].committer_use_tls is defined) and hostvars[committer_query_service_hosts | first].committer_use_tls %}
+  # TLS credentials used when connecting to the query service.
+  tls:
+    # List of paths to CA certificate files for verifying server certificates.
+    ca-cert-paths:
+      - {{ loadgen_config_dir }}/tls/query/ca.crt
+{% if (hostvars[committer_query_service_hosts | first].committer_use_mtls is defined) and hostvars[committer_query_service_hosts | first].committer_use_mtls %}
+    # Path to the client's TLS private key file.
+    key-path: {{ loadgen_config_dir }}/tls/server.key
+    # Path to the client's TLS certificate file (public key) for authentication.
+    cert-path: {{ loadgen_config_dir }}/tls/server.crt
+    # TLS mode for query-service connections.
+    mode: mtls
+{% else %}
+    # TLS mode for query-service connections.
+    mode: tls
+{% endif %}
+{% endif %}
+{% endif %}
+
 {% include './sections/server.yaml.j2' %}
 
 {% include './sections/load-profile.yaml.j2' %}

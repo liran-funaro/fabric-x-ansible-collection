@@ -19,6 +19,15 @@
         | list
         | first
       }}
+    committer_query_service_hosts: >-
+      {{
+        committer_hosts
+        | map('extract', hostvars)
+        | selectattr('committer_component_type', 'defined')
+        | selectattr('committer_component_type', '==', 'query-service')
+        | map(attribute='inventory_hostname')
+        | list
+      }}
     orderer_ref_host: >-
       {{
         orderer_hosts
@@ -64,6 +73,28 @@
           ansible.builtin.copy:
             src: "{{ fetched_artifacts_dir }}/{{ committer_sidecar_host }}/tls/ca.crt"
             dest: "{{ loadgen_remote_config_dir }}/tls/sidecar/ca.crt"
+            mode: "0o644"
+    # =========================
+    # HLFX Committer Query Service TLS
+    # =========================
+    # Only needed when the loadgen queries committed read versions (queries-rate > 0).
+    - name: Transfer Hyperledger Fabric-X Committer Query Service TLS CA certificate
+      when:
+        - loadgen_queries_rate is defined
+        - (loadgen_queries_rate | float) > 0
+        - committer_query_service_hosts | length > 0
+        - hostvars[committer_query_service_hosts | first].committer_use_tls is defined
+        - hostvars[committer_query_service_hosts | first].committer_use_tls
+      block:
+        - name: Ensure Hyperledger Fabric-X Committer Query Service TLS folder exists
+          ansible.builtin.file:
+            path: "{{ loadgen_remote_config_dir }}/tls/query"
+            state: directory
+            mode: "0o755"
+        - name: Transfer Hyperledger Fabric-X Committer Query Service TLS CA certificate
+          ansible.builtin.copy:
+            src: "{{ fetched_artifacts_dir }}/{{ committer_query_service_hosts | first }}/tls/ca.crt"
+            dest: "{{ loadgen_remote_config_dir }}/tls/query/ca.crt"
             mode: "0o644"
     # =========================
     # mTLS
