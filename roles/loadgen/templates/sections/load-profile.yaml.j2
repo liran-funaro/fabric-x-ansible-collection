@@ -2,9 +2,6 @@
 # Load profile configuration defining transaction characteristics and generation parameters
 # ---------------------------------------------------------------------------
 load-profile:
-  key:
-    # Size of generated keys in bytes. Affects transaction payload size and storage requirements.
-    size: {{ loadgen_key_size | default(32) }}
   # Random seed for reproducible transaction generation. Same seed produces same transaction sequence.
   seed: {{ loadgen_tx_seed | default(12345) }}
   # Number of worker goroutines for parallel transaction generation.
@@ -32,32 +29,57 @@ load-profile:
   #   - read-only: Reads a key without writing (version is nil).
   #   - read-write: Reads and writes a key (read version is nil).
   #   - blind-write (write-count): Writes a key without reading it first.
-  # The count for each type is specified using a distribution (see below).
-  # Supported distributions:
-  #   const: N                          - Exactly N operations.
-  #   uniform: {min: M, max: N}         - Uniformly distributed between M and N.
-  #   normal: {mean: M, std: S}         - Normal distribution with mean M and std S.
-  #   bernoulli: P                      - 1 with probability P, 0 otherwise.
-  #   discrete: [{value: V, probability: P}, ...] - Discrete distribution.
+  # The count for each type is a fixed number of operations per transaction (default: 0).
   transaction:
+    # Size of generated keys in bytes. Affects transaction payload size and storage requirements.
+    key-size: {{ loadgen_key_size | default(32) }}
+{% if loadgen_tx_metadata_size is defined %}
+    # Size in bytes of the metadata for each transaction (0 means nil value).
+    metadata-size: {{ loadgen_tx_metadata_size }}
+{% endif %}
 {% if loadgen_generate_read_only_tx | default(false) %}
     # Number of read-only operations per transaction.
-    read-only-count:
-      const: {{ loadgen_read_only_tx_keys | default(2) }}
+    read-only-count: {{ loadgen_read_only_tx_keys | default(2) }}
 {% endif %}
 {% if loadgen_generate_write_only_tx | default(false) %}
     # Number of blind-write operations per transaction.
-    write-count:
-      const: {{ loadgen_write_only_tx_keys | default(2) }}
+    write-count: {{ loadgen_write_only_tx_keys | default(2) }}
     # Size in bytes of the value written for each blind-write operation (0 means nil value).
     blind-write-value-size: {{ loadgen_write_only_tx_val_size | default(32) }}
 {% endif %}
 {% if loadgen_generate_read_write_tx | default(true) %}
     # Number of read-write operations per transaction.
-    read-write-count:
-      const: {{ loadgen_read_write_tx_keys | default(2) }}
+    read-write-count: {{ loadgen_read_write_tx_keys | default(2) }}
     # Size in bytes of the value written for each read-write operation (0 means nil value).
     read-write-value-size: {{ loadgen_read_write_tx_val_size | default(32) }}
+{% endif %}
+{% if loadgen_conflicts_settings is defined %}
+    # Fraction of transactions to generate with invalid signatures (0.0 to 1.0). Used to test
+    # signature verification and error handling. 0.1 = 10% invalid. The decision is derived
+    # deterministically from the transaction index.
+    invalid-signatures: {{ loadgen_conflicts_settings.invalid_signatures | default(0) }}
+{% endif %}
+{% if loadgen_key_backref_rate is defined %}
+    # Commit-time contention is controlled by which keys fill the fixed transaction slots:
+    # fresh keys, or references back to keys from earlier transactions.
+    # key-backref-rate is the average number of backward references per transaction; the
+    # remaining slots create fresh keys. 0 (the default) gives every slot a fresh unique key —
+    # no reuse and no contention. Below 1 it acts as a probability (0.3 ~ 30% of transactions
+    # get a single reference). It must not exceed the total slot count
+    # (read-only-count + read-write-count + write-count).
+    key-backref-rate: {{ loadgen_key_backref_rate }}
+{% endif %}
+{% if loadgen_tx_reference_gap is defined %}
+    # A reference is drawn from the key-lookback-window newest keys that existed
+    # tx-reference-gap transactions ago. 0 (default) draws the newest keys, which may still be
+    # in flight, so conflicting transactions can land in the same block; larger values draw
+    # older, already-committed keys.
+    tx-reference-gap: {{ loadgen_tx_reference_gap }}
+{% endif %}
+{% if loadgen_key_lookback_window is defined %}
+    # 0 (default) steps straight back from the gap position (most contention); a positive value
+    # spreads references over that many keys, so larger means less contention.
+    key-lookback-window: {{ loadgen_key_lookback_window }}
 {% endif %}
   # Policy configuration for transaction endorsement and validation
   policy:
@@ -114,30 +136,10 @@ load-profile:
     # Otherwise, they will be shuffled.
     shuffle: {{ loadgen_query_settings.shuffle | default(false) | bool | lower }}
 {% endif %}
-{% if loadgen_conflicts_settings is defined %}
-  # Conflict and error injection configuration for testing system resilience.
-  conflicts:
-    # Fraction of transactions to generate with invalid signatures (0.0 to 1.0).
-    # Used to test signature verification and error handling. 0.1 = 10% invalid.
-    invalid-signatures: {{ loadgen_conflicts_settings.invalid_signatures | default(0) }}
-{% if loadgen_conflicts_settings.dependencies is defined %}
-    # Dependencies inject read-write conflicts between transactions to test MVCC validation.
-    # Each dependency type is an independent Bernoulli trial applied per transaction.
-    # 'src' and 'dst' specify the operation types that create the dependency:
-    #   "read", "write", or "read-write" (both read and write the same key).
-    # 'gap' controls the distance (in transaction count) between dependent transactions.
-    dependencies:
-{% for dependency in loadgen_conflicts_settings.dependencies %}
-      # 0.05 -> 5% of transactions will have this dependency
-      - probability: {{ dependency.probability | default(0) }}
-        # Source transaction reads and writes a key
-        src: {{ dependency.src | default('read-write') }}
-        # Destination transaction reads and writes the same key
-        dst: {{ dependency.dst | default('read-write') }}
-        # Gap is the distance between the dependent TXs
-        gap:
-          # Dependent transaction is the immediately next one
-          const: {{ dependency.gap | default(500) }}
-{% endfor %}
-{% endif %}
-{% endif %}
+{#
+  The former "conflicts" section is gone: invalid-signatures moved under "transaction" above,
+  and conflicts.dependencies was replaced by the key-backref-rate / tx-reference-gap /
+  key-lookback-window trio, also under "transaction". Setting
+  loadgen_conflicts_settings.dependencies has no effect any more — use loadgen_key_backref_rate
+  to create commit-time contention instead.
+#}
