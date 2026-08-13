@@ -331,6 +331,13 @@ all:
     # HLFX LoadGens
     # =========================
     load_generators:
+      vars:
+        # Run the loadgen as a host binary too, transfer-only, same as the committer.
+        # The loadgen binary must match the committer version: the load-profile template
+        # emits the current schema, which a 1.0.4 loadgen would reject.
+        loadgen_use_bin: true
+        bin_build_on_control_node: true
+        loadgen_build_bin: false
       hosts:
         orderer-loadgen:
           organization:
