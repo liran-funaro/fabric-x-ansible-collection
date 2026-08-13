@@ -1,0 +1,47 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Creates the committer's system tables and namespaces, once per committer, before the
+# components start. See roles/committer/tasks/db_init.yaml for why this is needed from #617
+# onwards.
+#
+# Ordering matters and is enforced by the caller: examples/playbooks/40-start.yaml imports this
+# after the PostgreSQL/YugabyteDB plays and before hyperledger.fabricx.committer.start, because
+# the database must be up and the validator must not have started yet.
+- name: Initialize the Hyperledger Fabric-X Committer state database
+  hosts: "{{ target_hosts | default('fabric_x_committers') }}:&fabric_x_committers"
+  tasks:
+    - name: Initialize the committer state database
+      when:
+        - committer_component_type is defined
+        - committer_component_type == 'validator'
+      block:
+        # All validators of one committer share a database, so initialize from exactly one of
+        # them. Selecting the first validator of this host's own organization means a
+        # deployment with several committers still gets one initialization per database,
+        # rather than one overall.
+        - name: Select the validator that initializes this committer's database
+          ansible.builtin.set_fact:
+            committer_db_init_host: >-
+              {{
+                ansible_play_hosts_all
+                | map('extract', hostvars)
+                | selectattr('committer_component_type', 'defined')
+                | selectattr('committer_component_type', '==', 'validator')
+                | selectattr('organization', 'defined')
+                | selectattr('organization.domain', 'defined')
+                | selectattr('organization.domain', '==', organization.domain)
+                | map(attribute='inventory_hostname')
+                | sort
+                | first
+              }}
+
+        - name: Initialize the committer state database
+          ansible.builtin.include_role:
+            name: hyperledger.fabricx.committer
+            tasks_from: db_init
+          when:
+            - inventory_hostname == committer_db_init_host
