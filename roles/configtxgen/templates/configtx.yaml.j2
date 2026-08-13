@@ -196,7 +196,13 @@ Application: &ApplicationDefaults
     Endorsement:
       Type: ImplicitMeta
       Rule: "{{ configtxgen_application_policies_endorsement_operator | default('MAJORITY') }} Endorsement"
-    LifecycleEndorsement:
+    # The committer resolves one channel policy per system namespace, per
+    # policy.SystemNamespacePolicies: LifecycleEndorsement authorizes _meta (namespace
+    # lifecycle), SnapshotEndorsement authorizes _snapshot and CheckpointEndorsement
+    # authorizes _checkpoint. Since #683 the committer rejects a config block that is
+    # missing ANY of the three, so all three must be emitted here.
+{% for endorsement_policy in ['LifecycleEndorsement', 'SnapshotEndorsement', 'CheckpointEndorsement'] %}
+    {{ endorsement_policy }}:
 {% if configtxgen_peers_by_org.items() | length > 0 %}
       Type: Signature
       Rule: >
@@ -209,6 +215,7 @@ Application: &ApplicationDefaults
       Type: ImplicitMeta
       Rule: ANY Admins
 {% endif %}
+{% endfor %}
 
   # Capabilities describes the application level capabilities, see the
   # dedicated Capabilities section elsewhere in this file for a full

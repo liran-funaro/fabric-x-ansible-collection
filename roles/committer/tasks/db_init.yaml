@@ -1,0 +1,49 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Creates the committer's system tables and namespaces in the state database.
+#
+# Committer v1.0.4 and earlier did this implicitly: the coordinator called
+# SetupSystemTablesAndNamespaces over the VC's gRPC connection while starting, so simply
+# starting the network created the schema. #617 ("[BREAKING] Add CLI command for database
+# initialization") moved that into an explicit `committer init-db` command and removed the
+# implicit call, so the schema now has to be created before the components start.
+#
+# Without it the validator never finishes booting — it retries
+# `relation "ns__meta" does not exist` forever and never opens its RPC port, so the
+# coordinator times out waiting for it. Nothing reports the real cause.
+#
+# This is a one-time, idempotent operation against a shared database, so the caller is
+# responsible for running it exactly once per committer (see playbooks/committer/db_init.yaml)
+# and for ordering it after the database is up but before the components start.
+
+- name: Initialize the committer state database with the committer binary
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.committer
+    tasks_from: bin/db_init
+  when:
+    - committer_use_bin
+
+- name: Initialize the committer state database with the committer container
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.committer
+    tasks_from: container/db_init
+  when:
+    - committer_use_container | bool
+
+# The Kubernetes and OpenShift paths would need this to run as a Job against the same
+# database. That is not implemented here, so warn loudly rather than skip in silence and
+# leave the operator to discover the retry loop on their own.
+- name: Warn that the state database must be initialized manually on Kubernetes/OpenShift
+  ansible.builtin.debug:
+    msg: >-
+      The committer state database was NOT initialized automatically: this play only supports
+      the binary and container deployment modes. Run
+      `committer init-db --config <validator config>` against
+      {{ inventory_hostname }}'s database before starting the committer, otherwise the
+      validator will retry 'relation "ns__meta" does not exist' and never open its RPC port.
+  when:
+    - committer_use_k8s or committer_use_openshift
