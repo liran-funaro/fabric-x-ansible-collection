@@ -347,7 +347,11 @@ all:
         # enough back that they are committed rather than still in flight.
         loadgen_key_backref_rate: 1
         loadgen_tx_reference_gap: 1000
-        loadgen_key_lookback_window: 1024
+        # A wide window spreads backward references over many keys, so queries still hit
+        # committed versions while MVCC contention stays low. With window 1024 the same keys are
+        # reused constantly and ~64% of transactions abort on conflicts, which would conflate
+        # query cost with contention in a throughput ramp.
+        loadgen_key_lookback_window: 500000
       hosts:
         orderer-loadgen:
           organization:
