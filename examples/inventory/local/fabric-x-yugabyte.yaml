@@ -338,6 +338,9 @@ all:
         loadgen_use_bin: true
         bin_build_on_control_node: true
         loadgen_build_bin: false
+        # Exercise the new query path: fetch the committed version for ~1 of the 2 reads
+        # per transaction. Must be <= read-only-count + read-write-count (0 + 2 here).
+        loadgen_queries_rate: 1
       hosts:
         orderer-loadgen:
           organization:

@@ -204,6 +204,51 @@ argument_specs:
         description:
           - Generated key size in bytes.
           - "Example: C(32)."
+      loadgen_tx_metadata_size: &loadgen_tx_metadata_size
+        type: int
+        description:
+          - Size in bytes of the per-transaction metadata. C(0) means a nil value.
+          - Leave unset to omit the key and use the committer's own default.
+          - "Example: C(150)."
+      loadgen_queries_rate: &loadgen_queries_rate
+        type: float
+        description:
+          - Average number of reads per transaction whose committed version is fetched from the
+            query service before the transaction is signed.
+          - C(0), the default, disables querying entirely and reads keep nil versions.
+          - Must not exceed the version-bearing reads
+            (C(loadgen_read_only_tx_keys) + C(loadgen_read_write_tx_keys)), and is independent of
+            C(loadgen_key_backref_rate).
+          - When greater than C(0) the loadgen role emits a top-level C(query-client) connection
+            to the C(query-service) committer hosts, so at least one must exist in the inventory.
+          - "Example: C(1)."
+      loadgen_key_backref_rate: &loadgen_key_backref_rate
+        type: float
+        description:
+          - Average number of backward key references (reused keys) per transaction; the remaining
+            transaction slots create fresh keys. This is what creates commit-time contention.
+          - C(0), the default, gives every slot a fresh unique key — no reuse and no contention.
+          - Below C(1) it behaves as a probability, so C(0.3) means roughly 30% of transactions
+            carry a single reference.
+          - Must not exceed the total slot count.
+          - "Example: C(1)."
+      loadgen_tx_reference_gap: &loadgen_tx_reference_gap
+        type: int
+        description:
+          - Controls how far back references point. A reference is drawn from the keys that
+            existed this many transactions ago.
+          - C(0), the default, draws the newest keys, which may still be in flight, so conflicting
+            transactions can land in the same block. Larger values draw older, committed keys.
+          - Irrelevant when C(loadgen_key_backref_rate) is C(0).
+          - "Example: C(100)."
+      loadgen_key_lookback_window: &loadgen_key_lookback_window
+        type: int
+        description:
+          - How many keys a backward reference is spread over, counting back from the gap position.
+          - C(0), the default, steps straight back from the gap position, producing the most
+            contention. Larger values spread references out and reduce contention.
+          - Irrelevant when C(loadgen_key_backref_rate) is C(0).
+          - "Example: C(1024)."
       loadgen_tx_seed: &loadgen_tx_seed
         type: int
         description:
@@ -650,6 +695,11 @@ argument_specs:
       loadgen_generate_namespace: *loadgen_generate_namespace
       loadgen_generate_load: *loadgen_generate_load
       loadgen_key_size: *loadgen_key_size
+      loadgen_tx_metadata_size: *loadgen_tx_metadata_size
+      loadgen_queries_rate: *loadgen_queries_rate
+      loadgen_key_backref_rate: *loadgen_key_backref_rate
+      loadgen_tx_reference_gap: *loadgen_tx_reference_gap
+      loadgen_key_lookback_window: *loadgen_key_lookback_window
       loadgen_tx_seed: *loadgen_tx_seed
       loadgen_workers: *loadgen_workers
       loadgen_block_max_size: *loadgen_block_max_size

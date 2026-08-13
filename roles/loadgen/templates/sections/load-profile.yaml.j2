@@ -59,6 +59,13 @@ load-profile:
     # deterministically from the transaction index.
     invalid-signatures: {{ loadgen_conflicts_settings.invalid_signatures | default(0) }}
 {% endif %}
+{% if loadgen_queries_rate is defined %}
+    # Average number of reads per transaction whose committed version is fetched from the query
+    # service before signing. 0 (the default) means no querying at all and reads keep nil versions.
+    # Independent of key-backref-rate, and must not exceed the version-bearing reads
+    # (read-only-count + read-write-count). Requires the top-level query-client connection.
+    queries-rate: {{ loadgen_queries_rate }}
+{% endif %}
 {% if loadgen_key_backref_rate is defined %}
     # Commit-time contention is controlled by which keys fill the fixed transaction slots:
     # fresh keys, or references back to keys from earlier transactions.
@@ -124,18 +131,13 @@ load-profile:
       - id={{ hostvars[orderer_assembler].orderer_group }},msp-id={{ hostvars[orderer_assembler].organization.name }},deliver,{{ hostvars[orderer_assembler].ansible_host }}:{{ hostvars[orderer_assembler].orderer_rpc_port }}
 {% endfor %}
 {% endif %}
-{% if loadgen_query_settings is defined %}
-  # Describe query characteristics.
-  query:
-    # The number of keys to query.
-    query-size: {{ loadgen_query_settings.size | default(1) }}
-    # The minimal portion of invalid keys (1 => all keys are invalid).
-    # This is a lower bound since some valid keys might have failed to commit due to conflicts.
-    min-invalid-keys-portion: {{ loadgen_query_settings.min_invalid_keys_portion | default(1) }}
-    # If Shuffle=false, the valid keys will be placed first.
-    # Otherwise, they will be shuffled.
-    shuffle: {{ loadgen_query_settings.shuffle | default(false) | bool | lower }}
-{% endif %}
+{#
+  The standalone "load-profile.query" workload (query-size / min-invalid-keys-portion / shuffle)
+  was removed upstream: the QueryProfile/QueryGenerator/QueryStream code behind it was dead.
+  Querying is now driven from the live commit load instead — see transaction.queries-rate above,
+  which needs the top-level query-client connection. loadgen_query_settings no longer has any
+  effect.
+#}
 {#
   The former "conflicts" section is gone: invalid-signatures moved under "transaction" above,
   and conflicts.dependencies was replaced by the key-backref-rate / tx-reference-gap /
