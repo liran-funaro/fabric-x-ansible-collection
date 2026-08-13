@@ -221,6 +221,15 @@ argument_specs:
             C(loadgen_key_backref_rate).
           - When greater than C(0) the loadgen role emits a top-level C(query-client) connection
             to the C(query-service) committer hosts, so at least one must exist in the inventory.
+          - Each query is a synchronous round-trip that blocks its loadgen worker before the
+            transaction is signed, so the achievable rate is bounded by
+            C(loadgen_workers) divided by the query latency, independent of the rate limit.
+          - Measured on a single-machine YugabyteDB deployment at roughly 99ms mean query
+            latency. The default C(loadgen_workers) of one per vCPU (32) capped throughput at
+            about 315 tps however high the rate limit was set, while 512 workers reached about
+            4800 tps and querying disabled reached about 15000 tps.
+          - Raise C(loadgen_workers) when enabling this, or lower the rate so only a fraction of
+            transactions query.
           - "Example: C(1)."
       loadgen_key_backref_rate: &loadgen_key_backref_rate
         type: float
