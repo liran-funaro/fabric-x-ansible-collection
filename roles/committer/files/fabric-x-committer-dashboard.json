@@ -567,7 +567,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "id": 306,
       "panels": [],
@@ -640,7 +640,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 19
+        "y": 27
       },
       "id": 307,
       "interval": "1",
@@ -747,7 +747,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 19
+        "y": 27
       },
       "id": 308,
       "interval": "1",
@@ -854,7 +854,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 19
+        "y": 27
       },
       "id": 309,
       "interval": "1",
@@ -962,7 +962,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 35
       },
       "id": 310,
       "interval": "1",
@@ -1088,7 +1088,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 35
       },
       "id": 311,
       "interval": "1",
@@ -1213,7 +1213,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "id": 312,
       "interval": "1",
@@ -1321,7 +1321,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 43
       },
       "id": 313,
       "interval": "1",
@@ -1429,7 +1429,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "id": 314,
       "interval": "1",
@@ -1537,7 +1537,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 43
+        "y": 51
       },
       "id": 315,
       "interval": "1",
@@ -1645,7 +1645,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 43
+        "y": 51
       },
       "id": 316,
       "interval": "1",
@@ -1753,7 +1753,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "id": 317,
       "interval": "1",
@@ -1860,7 +1860,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "id": 318,
       "interval": "1",
@@ -1967,7 +1967,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 319,
       "interval": "1",
@@ -2074,7 +2074,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 59
+        "y": 67
       },
       "id": 320,
       "interval": "1",
@@ -2200,7 +2200,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 59
+        "y": 67
       },
       "id": 321,
       "interval": "1",
@@ -2265,7 +2265,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 115
       },
       "id": 335,
       "panels": [],
@@ -2339,7 +2339,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 108
+        "y": 116
       },
       "id": 336,
       "interval": "1",
@@ -2447,7 +2447,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 108
+        "y": 116
       },
       "id": 337,
       "interval": "1",
@@ -2555,7 +2555,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 116
+        "y": 124
       },
       "id": 338,
       "interval": "1",
@@ -2663,7 +2663,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 116
+        "y": 124
       },
       "id": 339,
       "interval": "1",
@@ -2770,7 +2770,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 116
+        "y": 124
       },
       "id": 340,
       "interval": "1",
@@ -2932,7 +2932,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 124
+        "y": 132
       },
       "id": 341,
       "interval": "1",
@@ -3040,7 +3040,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 124
+        "y": 132
       },
       "id": 342,
       "interval": "1",
@@ -3148,7 +3148,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 132
+        "y": 140
       },
       "id": 343,
       "interval": "1",
@@ -3256,7 +3256,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 132
+        "y": 140
       },
       "id": 344,
       "interval": "1",
@@ -3363,7 +3363,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 140
+        "y": 148
       },
       "id": 345,
       "interval": "1",
@@ -3470,7 +3470,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 140
+        "y": 148
       },
       "id": 346,
       "interval": "1",
@@ -3578,7 +3578,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 148
+        "y": 156
       },
       "id": 347,
       "interval": "1",
@@ -3686,7 +3686,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 148
+        "y": 156
       },
       "id": 348,
       "interval": "1",
@@ -3733,7 +3733,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 156
+        "y": 164
       },
       "id": 349,
       "panels": [],
@@ -3807,7 +3807,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 157
+        "y": 165
       },
       "id": 350,
       "interval": "1",
@@ -3932,7 +3932,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 157
+        "y": 165
       },
       "id": 351,
       "interval": "1",
@@ -3979,7 +3979,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 165
+        "y": 173
       },
       "id": 352,
       "panels": [],
@@ -4053,7 +4053,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 166
+        "y": 174
       },
       "id": 353,
       "interval": "1",
@@ -4161,7 +4161,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 166
+        "y": 174
       },
       "id": 354,
       "interval": "1",
@@ -4269,7 +4269,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 166
+        "y": 174
       },
       "id": 355,
       "interval": "1",
@@ -4377,7 +4377,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 174
+        "y": 182
       },
       "id": 356,
       "interval": "1",
@@ -4485,7 +4485,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 174
+        "y": 182
       },
       "id": 357,
       "interval": "1",
@@ -4592,7 +4592,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 182
+        "y": 190
       },
       "id": 358,
       "interval": "1",
@@ -4699,7 +4699,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 182
+        "y": 190
       },
       "id": 359,
       "interval": "1",
@@ -4806,7 +4806,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 182
+        "y": 190
       },
       "id": 360,
       "interval": "1",
@@ -4913,7 +4913,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 182
+        "y": 190
       },
       "id": 361,
       "interval": "1",
@@ -5021,7 +5021,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 190
+        "y": 198
       },
       "id": 362,
       "interval": "1",
@@ -5129,7 +5129,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 190
+        "y": 198
       },
       "id": 363,
       "interval": "1",
@@ -5237,7 +5237,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 190
+        "y": 198
       },
       "id": 364,
       "interval": "1",
@@ -5345,7 +5345,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 198
+        "y": 206
       },
       "id": 365,
       "interval": "1",
@@ -5453,7 +5453,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 198
+        "y": 206
       },
       "id": 366,
       "interval": "1",
@@ -5561,7 +5561,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 198
+        "y": 206
       },
       "id": 367,
       "interval": "1",
@@ -5669,7 +5669,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 206
+        "y": 214
       },
       "id": 368,
       "interval": "1",
@@ -5777,7 +5777,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 206
+        "y": 214
       },
       "id": 369,
       "interval": "1",
@@ -5885,7 +5885,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 206
+        "y": 214
       },
       "id": 370,
       "interval": "1",
@@ -5932,7 +5932,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 222
+        "y": 230
       },
       "id": 372,
       "panels": [],
@@ -6006,7 +6006,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 223
+        "y": 231
       },
       "id": 373,
       "interval": "1",
@@ -6113,7 +6113,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 223
+        "y": 231
       },
       "id": 374,
       "interval": "1",
@@ -6221,7 +6221,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 231
+        "y": 239
       },
       "id": 375,
       "interval": "1",
@@ -6346,7 +6346,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 231
+        "y": 239
       },
       "id": 376,
       "interval": "1",
@@ -6453,7 +6453,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 239
+        "y": 247
       },
       "id": 377,
       "interval": "1",
@@ -6560,7 +6560,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 239
+        "y": 247
       },
       "id": 378,
       "interval": "1",
@@ -6667,7 +6667,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 239
+        "y": 247
       },
       "id": 379,
       "interval": "1",
@@ -6774,7 +6774,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 247
+        "y": 255
       },
       "id": 380,
       "interval": "1",
@@ -6881,7 +6881,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 247
+        "y": 255
       },
       "id": 381,
       "interval": "1",
@@ -6921,12 +6921,123 @@
       ],
       "title": "Database Batch Response Size (99th)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 383,
+      "interval": "1",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum by (version) (rate(loadgen_queried_key_versions_total[$__rate_interval]))",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "{{version}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Queried Key Versions",
+      "type": "timeseries",
+      "description": "Reads resolved per second by the loadgen query stage, from the loadgen-side metric loadgen_queried_key_versions_total, broken down by the committed version observed. \"nil\" is a miss (the key has no committed version yet), so the hit rate is 1 - nil/total read straight off this plot. The spread over numeric buckets shows how often the workload revisits the same keys; \"16+\" folds everything at or above the tracked bound. All misses means the query stage is resolving nothing useful - typically key-lookback-window larger than the keyspace the run has touched, or key-backref-rate 0."
     }
   ],
   "preload": false,
   "refresh": "auto",
   "schemaVersion": 42,
-  "tags": ["prometheus"],
+  "tags": [
+    "prometheus"
+  ],
   "templating": {
     "list": [
       {
