@@ -28,9 +28,12 @@
         | map(attribute='inventory_hostname')
         | list
       }}
+    # Empty with the embedded mock orderer, where no ordering service is deployed. The
+    # rendered config only dereferences this host in the real-orderer branch.
     orderer_ref_host: >-
       {{
         orderer_hosts
+        | default([])
         | map('extract', hostvars)
         | selectattr('orderer_component_type', '==', 'router')
         | map(attribute='inventory_hostname')
@@ -51,11 +54,16 @@
     # =========================
     # Genesis config block
     # =========================
+    # Not needed with the embedded mock orderer: the loadgen reads the config block from its
+    # own artifacts directory, where `loadgen make-artifacts` generated it, and the orderer
+    # client that consumes this copy is not configured in that mode.
     - name: Copy genesis config block for Fabric-X Loadgen
       ansible.builtin.copy:
-        src: "{{ configtxgen_artifacts_dir }}/{{ channel_id }}_block.pb"
+        src: "{{ genesis_config_block_path }}"
         dest: "{{ loadgen_remote_config_dir }}/{{ loadgen_config_block_file }}"
         mode: "0o644"
+      when:
+        - not loadgen_use_mock_orderer
     # =========================
     # HLFX Committer Sidecar TLS
     # =========================

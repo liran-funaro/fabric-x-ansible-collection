@@ -251,12 +251,25 @@ argument_specs:
         description:
           - Control-node directory that stores cryptogen output.
           - "Example: C(/tmp/fabricx/crypto-material)."
-      configtxgen_artifacts_dir: &configtxgen_artifacts_dir
+      genesis_config_block_path: &genesis_config_block_path
         type: path
         required: true
         description:
-          - Control-node configtxgen output directory containing the genesis config block.
-          - "Example: C(/tmp/fabricx/configtxgen-artifacts)."
+          - Path on the control node of the genesis config block the sidecar bootstraps from.
+          - Written by configtxgen when a real ordering service is deployed, and by C(loadgen make-artifacts) when C(use_mock_orderer) is set.
+      use_mock_orderer: &use_mock_orderer
+        type: bool
+        required: false
+        description:
+          - Inventory-wide switch that selects the mock orderer topology for every role that takes part in it. Feeds C(committer_sidecar_use_mock_orderer).
+          - "Example: C(false)."
+      committer_sidecar_use_mock_orderer: &committer_sidecar_use_mock_orderer
+        type: bool
+        default: "{{ use_mock_orderer | default(false) }}"
+        description:
+          - The ordering service is a mock orderer embedded in the load generator process rather than a real deployment.
+          - The sidecar then pulls blocks from the load generator at the endpoint recorded in the generated config block, over a plaintext connection, and no orderer hosts are expected in the inventory.
+          - "Example: C(false)."
       actual_host: &actual_host
         type: str
         description:
@@ -273,11 +286,6 @@ argument_specs:
         description:
           - Organization definition consumed by crypto and sidecar configuration tasks.
           - "Example: C({'name': 'Org1', 'domain': 'org1.example.com', 'role': 'peer', 'fabric_ca_host': 'fca-org1', 'peer': {'name': 'committer-sidecar', 'secret': 'committer-sidecarPWD'}, 'users': [{'name': 'committer-sidecar', 'secret': 'committer-sidecarPWD'}]})."
-      channel_id: &channel_id
-        type: str
-        description:
-          - Fabric channel identifier consumed by sidecar configuration.
-          - "Example: C(mychannel)."
       committer_validators: &committer_validators
         type: list
         required: true
@@ -1294,9 +1302,8 @@ argument_specs:
     short_description: Generate sidecar config
     description:
       - Render sidecar configuration, upstream TLS bundles, and optional Kubernetes ConfigMap.
-      - Uses C(orderer_assemblers), C(committer_coordinator), C(channel_id), and MSP material.
+      - Uses C(orderer_assemblers), C(committer_coordinator), C(genesis_config_block_path), and MSP material.
     options:
-      channel_id: *channel_id
       committer_component_type: *committer_component_type
       committer_config_dir: *committer_config_dir
       committer_config_file: *committer_config_file
@@ -1341,11 +1348,16 @@ argument_specs:
       committer_use_mtls: *committer_use_mtls
       committer_use_openshift: *committer_use_openshift
       committer_use_tls: *committer_use_tls
-      configtxgen_artifacts_dir: *configtxgen_artifacts_dir
+      genesis_config_block_path: *genesis_config_block_path
+      use_mock_orderer: *use_mock_orderer
+      committer_sidecar_use_mock_orderer: *committer_sidecar_use_mock_orderer
       fetched_artifacts_dir:
         <<: *fetched_artifacts_dir
         required: true
-      orderer_assemblers: *orderer_assemblers
+      orderer_assemblers:
+        <<: *orderer_assemblers
+        # Absent when the load generator embeds a mock orderer.
+        required: false
       remote_config_dir: *remote_config_dir
       remote_data_dir: *remote_data_dir
 

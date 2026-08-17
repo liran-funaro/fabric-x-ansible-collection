@@ -1,0 +1,24 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+- name: Generate the Hyperledger Fabric-X Loadgen crypto material and genesis block as container
+  vars:
+    container_name: "{{ loadgen_container_name }}-make-artifacts"
+    container_image: "{{ loadgen_image }}"
+    container_command: >-
+      make-artifacts
+      --config={{ loadgen_container_config_dir }}/{{ loadgen_artifacts_config_file }}
+    # The config directory is mounted read-only, as it is for the running loadgen, so
+    # the artifacts get their own writable mount outside of it.
+    container_volumes:
+      - "{{ loadgen_remote_config_dir }}:{{ loadgen_container_config_dir }}:z,ro"
+      - "{{ loadgen_remote_artifacts_dir }}:{{ loadgen_container_artifacts_dir }}:z"
+    container_run_detach_mode: false
+    container_run_as_host_user: true
+    container_autoremove: true
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.container
+    tasks_from: start

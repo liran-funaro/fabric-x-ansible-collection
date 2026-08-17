@@ -1,0 +1,45 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# ---------------------------------------------------------------------------
+# Minimal Loadgen configuration used only by `loadgen make-artifacts`.
+#
+# When the loadgen drives the committer through its own embedded mock orderer
+# (use_mock_orderer), there is no real ordering service to build a config
+# block from, so configtxgen and Armageddon are not used. Instead the loadgen
+# generates the crypto material and the genesis config block itself, and both the
+# loadgen and the committer sidecar consume the result.
+#
+# The mock orderer signs the blocks it serves with the consenter identities found
+# under `artifacts-path`, and the sidecar verifies those blocks against the orderer
+# organization in the very same config block. Both sides must therefore come from
+# this single generation step; pairing this config block with crypto from another
+# source makes the sidecar reject every block.
+#
+# This file intentionally carries only the `policy` section: the remaining
+# load-profile settings live in the runtime config rendered next to it and have no
+# effect on the generated artifacts.
+# ---------------------------------------------------------------------------
+load-profile:
+  policy:
+    # Channel ID written into the genesis config block. Must match the channel the
+    # committer services are configured for.
+    channel-id: {{ channel_id }}
+    # Output directory for the generated crypto tree and config block. Existing
+    # artifacts are reused rather than regenerated, so this task removes the
+    # directory whenever this file changes.
+    artifacts-path: {{ loadgen_config_artifacts_dir }}
+    # Number of peer organizations to generate. Their MSP identities endorse the
+    # meta-namespace (namespace creation) transactions, and the config block requires
+    # all of them to sign, so keep this at 1 unless multi-organization endorsement is
+    # itself the subject of the test.
+    peer-organization-count: {{ loadgen_peer_organization_count }}
+    # Address advertised for the ordering service. It becomes the single orderer party
+    # in the config block, and the sidecar dials it to fetch blocks. It must match the
+    # address the embedded mock orderer binds to (`orderer-servers` in the runtime
+    # config), which is why both are derived from the same inventory values.
+    orderer-endpoints:
+      - id=0,broadcast,deliver,{{ ansible_host }}:{{ loadgen_mock_orderer_port }}

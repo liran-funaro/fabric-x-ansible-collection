@@ -11,3 +11,16 @@
   ansible.builtin.import_playbook: hyperledger.fabricx.artifacts.build_genesis_block
   when:
     - "'network' in groups"
+    - not (use_mock_orderer | default(false))
+
+######################################
+# Genesis block with the load generator's embedded mock orderer
+######################################
+# Without an ordering service there are no orderer endpoints and no orderer crypto for
+# configtxgen and Armageddon to build a config block from. The load generator generates both
+# instead, and the block is fetched to the control node so the committer sidecar can
+# bootstrap from it.
+- name: Generate the load generator crypto material and genesis block
+  ansible.builtin.import_playbook: hyperledger.fabricx.loadgen.make_artifacts
+  when:
+    - use_mock_orderer | default(false)

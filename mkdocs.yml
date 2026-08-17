@@ -109,6 +109,7 @@ nav:
           - fabric-x: examples/inventory/docs/local/fabric-x.md
           - fabric-x-yugabyte: examples/inventory/docs/local/fabric-x-yugabyte.md
           - fabric-x-bin: examples/inventory/docs/local/fabric-x-bin.md
+          - fabric-x-committer-only: examples/inventory/docs/local/fabric-x-committer-only.md
           - fabric-x-cryptogen: examples/inventory/docs/local/fabric-x-cryptogen.md
           - fabric-x-no-mtls: examples/inventory/docs/local/fabric-x-no-mtls.md
           - fabric-x-no-tls: examples/inventory/docs/local/fabric-x-no-tls.md

@@ -28,6 +28,9 @@
   - [bin/build](#binbuild)
   - [bin/install](#bininstall)
   - [bin/rm](#binrm)
+  - [make\_artifacts](#make_artifacts)
+  - [bin/make\_artifacts](#binmake_artifacts)
+  - [container/make\_artifacts](#containermake_artifacts)
   - [bin/start](#binstart)
   - [bin/stop](#binstop)
   - [bin/transfer](#bintransfer)
@@ -412,8 +415,22 @@ Render the Loadgen configuration file and transfer config-side support artifacts
           policy: "threshold"
     # Filename of the genesis config block placed in the Loadgen config directory.
     loadgen_config_block_file: config-block.pb.bin
-    # Local configtxgen output directory containing the genesis config block.
-    configtxgen_artifacts_dir: "string"
+    # Path on the control node of the genesis config block the load generator bootstraps from. Written by configtxgen when a real ordering service is deployed, and by `loadgen make-artifacts` when `use_mock_orderer` is set.
+    genesis_config_block_path: "string"
+    # Inventory-wide switch that selects the mock orderer topology for every role that takes part in it. Feeds `loadgen_use_mock_orderer`.
+    use_mock_orderer: false
+    # Run the workload against a mock orderer embedded in the load generator process instead of a real ordering service. The load generator cuts the blocks itself and serves them to the committer sidecar, which measures the committer without an ordering service in the path. It also generates the crypto material and the genesis config block, because the mock orderer signs the blocks it serves and the sidecar verifies them against the matching config block. Requires exactly one host in the `load_generators` group and no `fabric_x_orderers` group in the inventory.
+    loadgen_use_mock_orderer: "{{ use_mock_orderer | default(false) }}"
+    # Port the embedded mock orderer listens on when `use_mock_orderer` is set. Advertised in the generated config block, so the committer sidecar dials the load generator on this port.
+    loadgen_mock_orderer_port: 7050
+    # Base remote data directory that feeds `loadgen_remote_artifacts_dir`.
+    remote_data_dir: "/var/hyperledger/fabricx/loadgen/lg-1/data"
+    # Effective artifacts directory used inside rendered Loadgen configuration.
+    loadgen_config_artifacts_dir: "{{ loadgen_remote_artifacts_dir if loadgen_use_bin else loadgen_container_artifacts_dir }}"
+    # Directory on the load generator host holding the generated crypto material and genesis config block. Kept outside the config directory because that directory is mounted read-only in container mode.
+    loadgen_remote_artifacts_dir: "{{ remote_data_dir }}/artifacts"
+    # Artifacts mount path inside a container or pod.
+    loadgen_container_artifacts_dir: /artifacts
     # Fault tolerance level of the ordering service rendered into the Loadgen config.
     loadgen_orderer_fault_tolerance_level: "BFT"
     # Maximum number of TX entries held in memory for latency tracking.
@@ -733,6 +750,112 @@ Remove the installed `loadgen` binary managed by the shared binary helper role. 
   ansible.builtin.include_role:
     name: hyperledger.fabricx.loadgen
     tasks_from: bin/rm
+```
+
+### make_artifacts
+
+> Generate the crypto material and genesis config block
+
+Render the minimal artifacts config and run `loadgen make-artifacts` on the load generator host, then fetch the generated genesis config block to the control node for the committer sidecar. Only meaningful when `use_mock_orderer` is set. With a real ordering service, configtxgen and Armageddon build the config block instead. The artifacts directory is removed and regenerated whenever the rendered config changes, because `make-artifacts` otherwise reuses an existing config block and would keep advertising a stale orderer address.
+
+```yaml
+- name: Generate the crypto material and genesis config block
+  vars:
+    # Run the binary runtime.
+    loadgen_use_bin: false
+    # Run the container runtime.
+    loadgen_use_container: "{{ (not loadgen_use_bin) and (not loadgen_use_k8s) and (not loadgen_use_openshift) }}"
+    # Use Kubernetes resources.
+    loadgen_use_k8s: false
+    # Selects the OpenShift deployment branch.
+    loadgen_use_openshift: false
+    # Remote config directory used by Loadgen.
+    loadgen_remote_config_dir: "{{ remote_config_dir }}"
+    # Base remote config directory that feeds `loadgen_remote_config_dir`.
+    remote_config_dir: "/var/hyperledger/fabricx/loadgen/lg-1/config"
+    # Base remote data directory that feeds `loadgen_remote_artifacts_dir`.
+    remote_data_dir: "/var/hyperledger/fabricx/loadgen/lg-1/data"
+    # Filename of the minimal rendered config that drives `loadgen make-artifacts`.
+    loadgen_artifacts_config_file: config-loadgen-artifacts.yaml
+    # Effective artifacts directory used inside rendered Loadgen configuration.
+    loadgen_config_artifacts_dir: "{{ loadgen_remote_artifacts_dir if loadgen_use_bin else loadgen_container_artifacts_dir }}"
+    # Directory on the load generator host holding the generated crypto material and genesis config block. Kept outside the config directory because that directory is mounted read-only in container mode.
+    loadgen_remote_artifacts_dir: "{{ remote_data_dir }}/artifacts"
+    # Artifacts mount path inside a container or pod.
+    loadgen_container_artifacts_dir: /artifacts
+    # Directory on the control node the generated genesis config block is fetched into.
+    loadgen_artifacts_dir: "string"
+    # Filename of the genesis config block placed in the Loadgen config directory.
+    loadgen_config_block_file: config-block.pb.bin
+    # Port the embedded mock orderer listens on when `use_mock_orderer` is set. Advertised in the generated config block, so the committer sidecar dials the load generator on this port.
+    loadgen_mock_orderer_port: 7050
+    # Number of peer organizations generated into the artifacts when `use_mock_orderer` is set. Their MSP identities endorse the namespace-creation transactions, and the generated config block requires all of them to sign, so raising this adds a signature per namespace transaction.
+    loadgen_peer_organization_count: 1
+    # Channel identifier rendered into generated transactions.
+    channel_id: "fabricx-channel"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.loadgen
+    tasks_from: make_artifacts
+```
+
+### bin/make_artifacts
+
+> Generate the artifacts with the binary runtime
+
+Invoke `loadgen make-artifacts --config=...` as a local binary process.
+
+```yaml
+- name: Generate the artifacts with the binary runtime
+  vars:
+    # Binary name used by the shared bin role.
+    loadgen_bin_name: loadgen
+    # Remote config directory used by Loadgen.
+    loadgen_remote_config_dir: "{{ remote_config_dir }}"
+    # Base remote config directory that feeds `loadgen_remote_config_dir`.
+    remote_config_dir: "/var/hyperledger/fabricx/loadgen/lg-1/config"
+    # Filename of the minimal rendered config that drives `loadgen make-artifacts`.
+    loadgen_artifacts_config_file: config-loadgen-artifacts.yaml
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.loadgen
+    tasks_from: bin/make_artifacts
+```
+
+### container/make_artifacts
+
+> Generate the artifacts with the container runtime
+
+Invoke `loadgen make-artifacts --config=...` in a short-lived container. The config directory is mounted read-only, as it is for the running load generator, so the artifacts get a separate writable mount.
+
+```yaml
+- name: Generate the artifacts with the container runtime
+  vars:
+    # Container name used by the runtime.
+    loadgen_container_name: "{{ inventory_hostname }}"
+    # Loadgen container image.
+    loadgen_image: "{{ loadgen_registry_endpoint }}/{{ loadgen_image_name }}:{{ loadgen_image_tag }}"
+    # Image name used by the Loadgen container.
+    loadgen_image_name: fabric-x-loadgen
+    # Image tag used by the Loadgen container.
+    loadgen_image_tag: 1.0.4
+    # Image registry endpoint.
+    loadgen_registry_endpoint: "{{ lookup('env', 'LOADGEN_REGISTRY_ENDPOINT') or 'docker.io/hyperledger' }}"
+    # Config mount path inside a container or pod.
+    loadgen_container_config_dir: /config
+    # Remote config directory used by Loadgen.
+    loadgen_remote_config_dir: "{{ remote_config_dir }}"
+    # Base remote config directory that feeds `loadgen_remote_config_dir`.
+    remote_config_dir: "/var/hyperledger/fabricx/loadgen/lg-1/config"
+    # Base remote data directory that feeds `loadgen_remote_artifacts_dir`.
+    remote_data_dir: "/var/hyperledger/fabricx/loadgen/lg-1/data"
+    # Filename of the minimal rendered config that drives `loadgen make-artifacts`.
+    loadgen_artifacts_config_file: config-loadgen-artifacts.yaml
+    # Artifacts mount path inside a container or pod.
+    loadgen_container_artifacts_dir: /artifacts
+    # Directory on the load generator host holding the generated crypto material and genesis config block. Kept outside the config directory because that directory is mounted read-only in container mode.
+    loadgen_remote_artifacts_dir: "{{ remote_data_dir }}/artifacts"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.loadgen
+    tasks_from: container/make_artifacts
 ```
 
 ### bin/start

@@ -22,8 +22,31 @@ config_build_dir: "{{ control_node_dir }}/config"
 cryptogen_artifacts_dir: "{{ config_build_dir }}/cryptogen-artifacts"
 armageddon_artifacts_dir: "{{ config_build_dir }}/armageddon-artifacts"
 configtxgen_artifacts_dir: "{{ config_build_dir }}/configtxgen-artifacts"
+loadgen_artifacts_dir: "{{ config_build_dir }}/loadgen-artifacts"
 
 # =========================
 # Miscellaneous
 # =========================
 channel_id: arma
+
+# =========================
+# Genesis config block
+# =========================
+# Path on the control node of the genesis config block that the committer sidecar and the
+# load generator bootstrap from. With a real ordering service, configtxgen writes it. With
+# the mock orderer embedded in the load generator, `loadgen make-artifacts` writes it and it
+# is fetched here, because the mock orderer signs the blocks it serves with the crypto
+# material generated next to it and the sidecar has to verify them against the matching
+# config block.
+#
+# 'use_mock_orderer' is deliberately left undefined here rather than defaulted to false.
+# This file is shared by every inventory through a symlink, and inventory group_vars take
+# precedence over the vars an inventory file sets for 'all', so a value here could not be
+# overridden by the inventory that needs it. The inventories that run without an ordering
+# service set it themselves.
+genesis_config_block_path: >-
+  {{
+    (loadgen_artifacts_dir ~ '/config-block.pb.bin')
+    if use_mock_orderer | default(false)
+    else (configtxgen_artifacts_dir ~ '/' ~ channel_id ~ '_block.pb')
+  }}

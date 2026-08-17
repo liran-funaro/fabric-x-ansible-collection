@@ -4,6 +4,32 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+{% if loadgen_use_mock_orderer %}
+# ---------------------------------------------------------------------------
+# Sidecar Client Settings
+# ---------------------------------------------------------------------------
+# The presence of this section selects the sidecar adapter, which replaces the
+# ordering service with a mock orderer embedded in this loadgen process. Blocks are
+# cut here and served straight to the committer sidecar, so the committer can be
+# measured without an ordering service in the path.
+#
+# The mock orderer serves the genesis config block, and signs the blocks it cuts,
+# using the material under load-profile.policy.artifacts-path. The sidecar verifies
+# those blocks against the orderer organization carried in that same config block.
+sidecar-client:
+{% include './sections/sidecar-client.yaml.j2' %}
+  # Addresses the embedded mock orderer listens on, one gRPC server per orderer party.
+  # These have to match the endpoints advertised in the config block, or the sidecar
+  # dials an address nothing is serving.
+  #
+  # Plaintext by design: the sidecar takes the CA certificates for its orderer
+  # connection from the config block, and the orderer TLS certificate generated with
+  # the artifacts does not carry this host in its subject alternative names, so server
+  # verification could not succeed. This link exists only to feed the committer under
+  # test, and carries the same transactions the loadgen already generates locally.
+  orderer-servers:
+    - endpoint: 0.0.0.0:{{ loadgen_mock_orderer_port }}
+{% else %}
 # ---------------------------------------------------------------------------
 # Orderer Client Settings
 # ---------------------------------------------------------------------------
@@ -51,33 +77,7 @@ orderer-client:
           Security: 256
           # Hash algorithm: 'SHA2' or 'SHA3'.
           Hash: SHA2
-{% if committer_sidecar_host is defined %}
-  # Sidecar client configuration (alternative to direct orderer connection)
-  sidecar-client:
-    # Endpoint of the sidecar service to connect to for block delivery.
-    # Format: host:port.
-    endpoint: {{ hostvars[committer_sidecar_host].ansible_host }}:{{ hostvars[committer_sidecar_host].committer_rpc_port }}
-{% if (hostvars[committer_sidecar_host].committer_use_tls is defined) and hostvars[committer_sidecar_host].committer_use_tls %}
-    # Define TLS options and certificate paths used for secure communication
-    # between the sidecar-client and the sidecar.
-    tls:
-      # List of paths to CA certificate files for verifying server certificates.
-      ca-cert-paths:
-        - {{ loadgen_config_dir }}/tls/sidecar/ca.crt
-{% if (hostvars[committer_sidecar_host].committer_use_mtls is defined) and hostvars[committer_sidecar_host].committer_use_mtls %}
-      # Path to the client's TLS private key file.
-      key-path: {{ loadgen_config_dir }}/tls/server.key
-      # Path to the client's TLS certificate file (public key) for authentication.
-      cert-path: {{ loadgen_config_dir }}/tls/server.crt
-      # TLS mode for sidecar client connections: 'none' (no TLS), 'tls' (server auth only),
-      # or 'mtls' (mutual TLS with client cert verification).
-      mode: mtls
-{% else %}
-      # TLS mode for sidecar client connections: 'none' (no TLS), 'tls' (server auth only),
-      # or 'mtls' (mutual TLS with client cert verification).
-      mode: tls
-{% endif %}
-{% endif %}
+{% include './sections/sidecar-client.yaml.j2' %}
 {% endif %}
 
 {% if loadgen_queries_rate is defined and (loadgen_queries_rate | float) > 0 %}

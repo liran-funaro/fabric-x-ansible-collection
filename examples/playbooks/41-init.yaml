@@ -4,5 +4,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Skipped when the load generator embeds a mock orderer: fxconfig submits the
+# namespace-creation transactions through the ordering service, and there is none. The load
+# generator creates them itself over its own mock orderer during its namespaces phase, so
+# 'loadgen_generate_namespace' has to be set in that topology.
 - name: Create namespaces on Fabric-X Committer
   ansible.builtin.import_playbook: hyperledger.fabricx.fxconfig.create_namespaces
+  when:
+    - not (use_mock_orderer | default(false))

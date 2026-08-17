@@ -1,0 +1,40 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+- name: Generate Fabric-X Loadgen crypto material and genesis config block
+  hosts: "{{ target_hosts | default('load_generators') }}:&load_generators"
+  tasks:
+    - name: Check that no ordering service is declared alongside the mock orderer
+      ansible.builtin.fail:
+        msg: >-
+          'use_mock_orderer' is set, but the inventory also declares the
+          'fabric_x_orderers' group. The load generator's embedded mock orderer replaces the
+          ordering service, so deploying both leaves the orderers idle while the committer
+          sidecar pulls blocks from the load generator. Remove the orderer hosts from the
+          inventory, or unset 'use_mock_orderer'.
+      when:
+        - use_mock_orderer | default(false)
+        - "'fabric_x_orderers' in groups"
+
+    - name: Check that exactly one load generator is declared for the mock orderer
+      ansible.builtin.fail:
+        msg: >-
+          'use_mock_orderer' requires exactly one host in the 'load_generators' group, but
+          {{ groups['load_generators'] | default([]) | length }} were found. Each load
+          generator would generate its own crypto material and cut its own chain, and the
+          committer sidecar can only verify blocks against the single config block it
+          bootstrapped with. Use one load generator, raising 'loadgen_workers' if it cannot
+          saturate the committer on its own.
+      when:
+        - use_mock_orderer | default(false)
+        - (groups['load_generators'] | default([]) | length) != 1
+
+    - name: Generate Fabric-X Loadgen crypto material and genesis config block
+      ansible.builtin.include_role:
+        name: hyperledger.fabricx.loadgen
+        tasks_from: make_artifacts
+      when:
+        - use_mock_orderer | default(false)

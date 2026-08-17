@@ -11,7 +11,13 @@
   ansible.builtin.fail:
     msg: "No Hyperledger Fabric-X Orderer Assembler has been defined. Set it via 'orderer_assemblers'."
   when:
-    - orderer_assemblers is not defined
+    # With the mock orderer embedded in the load generator there is no ordering service to
+    # pull blocks from; the load generator serves them instead, at the endpoint recorded in
+    # the config block.
+    - not committer_sidecar_use_mock_orderer
+    # The callers derive this by filtering the orderer group, so it arrives as an empty list
+    # rather than undefined when no assembler is deployed.
+    - (orderer_assemblers | default([]) | length) == 0
 
 - name: Ensure Hyperledger Fabric-X Committer coordinator config directory exists
   ansible.builtin.file:
@@ -24,6 +30,7 @@
     orderer_assembler_ref_host: >-
       {{
         orderer_assemblers
+        | default([])
         | first
       }}
   ansible.builtin.template:
@@ -36,7 +43,7 @@
 # =========================
 - name: Copy genesis config block for Fabric-X Committer sidecar
   ansible.builtin.copy:
-    src: "{{ configtxgen_artifacts_dir }}/{{ channel_id }}_block.pb"
+    src: "{{ genesis_config_block_path }}"
     dest: "{{ committer_remote_config_dir }}/{{ committer_sidecar_config_block_file }}"
     mode: "0o644"
 

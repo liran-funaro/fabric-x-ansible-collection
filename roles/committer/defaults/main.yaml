@@ -82,5 +82,8 @@ committer_crypto_name: '{{ organization.peer.name | default(inventory_hostname) 
 committer_log_level: info
 # Log format emitted by the committer component.
 committer_log_format: "%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{shortfunc} -> %{level:.4s}%{color:reset} %{message}"
+# The ordering service is a mock orderer embedded in the load generator process rather than a real deployment.
+# The sidecar then pulls blocks from the load generator at the endpoint recorded in the generated config block, over a plaintext connection, and no orderer hosts are expected in the inventory.
+committer_sidecar_use_mock_orderer: '{{ use_mock_orderer | default(false) }}'
 # Selects the OpenShift deployment branch.
 committer_use_openshift: false

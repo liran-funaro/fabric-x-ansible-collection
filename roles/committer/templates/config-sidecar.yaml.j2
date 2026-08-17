@@ -23,7 +23,13 @@ orderer:
   # It can be the genesis config block (required for new deployments).
   # But it can also be used to bootstrap a deployment with a stale ledger.
   latest-known-config-block-path: {{ committer_config_dir }}/{{ committer_sidecar_config_block_file }}
-{% if (hostvars[orderer_assembler_ref_host].orderer_use_tls is defined) and hostvars[orderer_assembler_ref_host].orderer_use_tls %}
+{% if committer_sidecar_use_mock_orderer %}
+  # No TLS section: the ordering service is a mock orderer embedded in the load generator,
+  # which serves plaintext. The CA certificates for this connection would otherwise be read
+  # from the config block above, and the orderer TLS certificate generated alongside it does
+  # not carry the load generator's host in its subject alternative names, so server
+  # verification could not succeed.
+{% elif (hostvars[orderer_assembler_ref_host].orderer_use_tls is defined) and hostvars[orderer_assembler_ref_host].orderer_use_tls %}
   # Sidecar uses these TLS credentials when connecting to the orderers as a client.
   tls:
     # Path to the client's TLS private key file.

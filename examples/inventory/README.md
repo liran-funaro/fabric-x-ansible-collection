@@ -188,6 +188,7 @@ Local inventories run a complete network on the control machine with `ansible_co
 | [`local/fabric-x.yaml`](./docs/local/fabric-x.md)                     | Default local container deployment with Fabric CA, PostgreSQL, TLS, and mTLS. |
 | [`local/fabric-x-yugabyte.yaml`](./docs/local/fabric-x-yugabyte.md)   | Local container deployment using YugabyteDB as the committer database.        |
 | [`local/fabric-x-bin.yaml`](./docs/local/fabric-x-bin.md)             | Local deployment that runs Fabric-X services as binaries.                     |
+| [`local/fabric-x-committer-only.yaml`](./docs/local/fabric-x-committer-only.md) | Committer and YugabyteDB with no ordering service; the load generator embeds a mock orderer. |
 | [`local/fabric-x-cryptogen.yaml`](./docs/local/fabric-x-cryptogen.md) | Local container deployment using centrally generated `cryptogen` material.    |
 | [`local/fabric-x-no-mtls.yaml`](./docs/local/fabric-x-no-mtls.md)     | Local container deployment with TLS enabled and mTLS disabled.                |
 | [`local/fabric-x-no-tls.yaml`](./docs/local/fabric-x-no-tls.md)       | Local container deployment with TLS and mTLS disabled for debugging only.     |

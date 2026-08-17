@@ -14,6 +14,11 @@ argument_specs:
         description:
           - Base remote config directory that feeds C(loadgen_remote_config_dir).
           - "Example: C(/var/hyperledger/fabricx/loadgen/lg-1/config)."
+      remote_data_dir: &remote_data_dir
+        type: path
+        description:
+          - Base remote data directory that feeds C(loadgen_remote_artifacts_dir).
+          - "Example: C(/var/hyperledger/fabricx/loadgen/lg-1/data)."
       loadgen_remote_config_dir: &loadgen_remote_config_dir
         type: path
         default: "{{ remote_config_dir }}"
@@ -446,11 +451,66 @@ argument_specs:
         description:
           - Local cryptogen output directory.
           - "Example: C(/tmp/fabricx-crypto)."
-      configtxgen_artifacts_dir: &configtxgen_artifacts_dir
+      genesis_config_block_path: &genesis_config_block_path
         type: path
         required: true
         description:
-          - Local configtxgen output directory containing the genesis config block.
+          - Path on the control node of the genesis config block the load generator bootstraps from.
+          - Written by configtxgen when a real ordering service is deployed, and by C(loadgen make-artifacts) when C(use_mock_orderer) is set.
+      use_mock_orderer: &use_mock_orderer
+        type: bool
+        required: false
+        description:
+          - Inventory-wide switch that selects the mock orderer topology for every role that takes part in it. Feeds C(loadgen_use_mock_orderer).
+          - "Example: C(false)."
+      loadgen_use_mock_orderer: &loadgen_use_mock_orderer
+        type: bool
+        default: "{{ use_mock_orderer | default(false) }}"
+        description:
+          - Run the workload against a mock orderer embedded in the load generator process instead of a real ordering service.
+          - The load generator cuts the blocks itself and serves them to the committer sidecar, which measures the committer without an ordering service in the path. It also generates the crypto material and the genesis config block, because the mock orderer signs the blocks it serves and the sidecar verifies them against the matching config block.
+          - Requires exactly one host in the C(load_generators) group and no C(fabric_x_orderers) group in the inventory.
+          - "Example: C(false)."
+      loadgen_mock_orderer_port: &loadgen_mock_orderer_port
+        type: int
+        default: 7050
+        description:
+          - Port the embedded mock orderer listens on when C(use_mock_orderer) is set.
+          - Advertised in the generated config block, so the committer sidecar dials the load generator on this port.
+          - "Example: C(7050)."
+      loadgen_artifacts_dir: &loadgen_artifacts_dir
+        type: path
+        required: true
+        description:
+          - Directory on the control node the generated genesis config block is fetched into.
+      loadgen_remote_artifacts_dir: &loadgen_remote_artifacts_dir
+        type: path
+        default: "{{ remote_data_dir }}/artifacts"
+        description:
+          - Directory on the load generator host holding the generated crypto material and genesis config block.
+          - Kept outside the config directory because that directory is mounted read-only in container mode.
+      loadgen_container_artifacts_dir: &loadgen_container_artifacts_dir
+        type: path
+        default: "/artifacts"
+        description:
+          - Artifacts mount path inside a container or pod.
+      loadgen_config_artifacts_dir: &loadgen_config_artifacts_dir
+        type: path
+        default: "{{ loadgen_remote_artifacts_dir if loadgen_use_bin else loadgen_container_artifacts_dir }}"
+        description:
+          - Effective artifacts directory used inside rendered Loadgen configuration.
+      loadgen_artifacts_config_file: &loadgen_artifacts_config_file
+        type: str
+        default: "config-loadgen-artifacts.yaml"
+        description:
+          - Filename of the minimal rendered config that drives C(loadgen make-artifacts).
+      loadgen_peer_organization_count: &loadgen_peer_organization_count
+        type: int
+        default: 1
+        description:
+          - Number of peer organizations generated into the artifacts when C(use_mock_orderer) is set.
+          - Their MSP identities endorse the namespace-creation transactions, and the generated config block requires all of them to sign, so raising this adds a signature per namespace transaction.
+          - "Example: C(1)."
       committer_hosts: &committer_hosts
         type: list
         elements: str
@@ -735,7 +795,14 @@ argument_specs:
       channel_id: *channel_id
       organization: *organization
       loadgen_config_block_file: *loadgen_config_block_file
-      configtxgen_artifacts_dir: *configtxgen_artifacts_dir
+      genesis_config_block_path: *genesis_config_block_path
+      use_mock_orderer: *use_mock_orderer
+      loadgen_use_mock_orderer: *loadgen_use_mock_orderer
+      loadgen_mock_orderer_port: *loadgen_mock_orderer_port
+      remote_data_dir: *remote_data_dir
+      loadgen_config_artifacts_dir: *loadgen_config_artifacts_dir
+      loadgen_remote_artifacts_dir: *loadgen_remote_artifacts_dir
+      loadgen_container_artifacts_dir: *loadgen_container_artifacts_dir
       loadgen_orderer_fault_tolerance_level: *loadgen_orderer_fault_tolerance_level
       loadgen_monitoring_latency_max_tracked_txs: *loadgen_monitoring_latency_max_tracked_txs
       loadgen_broadcast_parallelism: *loadgen_broadcast_parallelism
@@ -866,6 +933,59 @@ argument_specs:
       - Does not remove generated configuration, crypto material, or runtime logs.
     options:
       loadgen_bin_name: *loadgen_bin_name
+
+  make_artifacts:
+    short_description: Generate the crypto material and genesis config block
+    description:
+      - Render the minimal artifacts config and run C(loadgen make-artifacts) on the load generator host, then fetch the generated genesis config block to the control node for the committer sidecar.
+      - Only meaningful when C(use_mock_orderer) is set. With a real ordering service, configtxgen and Armageddon build the config block instead.
+      - The artifacts directory is removed and regenerated whenever the rendered config changes, because C(make-artifacts) otherwise reuses an existing config block and would keep advertising a stale orderer address.
+    options:
+      loadgen_use_bin: *loadgen_use_bin
+      loadgen_use_container: *loadgen_use_container
+      loadgen_use_k8s: *loadgen_use_k8s
+      loadgen_use_openshift: *loadgen_use_openshift
+      loadgen_remote_config_dir: *loadgen_remote_config_dir
+      remote_config_dir: *remote_config_dir
+      remote_data_dir: *remote_data_dir
+      loadgen_artifacts_config_file: *loadgen_artifacts_config_file
+      loadgen_config_artifacts_dir: *loadgen_config_artifacts_dir
+      loadgen_remote_artifacts_dir: *loadgen_remote_artifacts_dir
+      loadgen_container_artifacts_dir: *loadgen_container_artifacts_dir
+      loadgen_artifacts_dir: *loadgen_artifacts_dir
+      loadgen_config_block_file: *loadgen_config_block_file
+      loadgen_mock_orderer_port: *loadgen_mock_orderer_port
+      loadgen_peer_organization_count: *loadgen_peer_organization_count
+      channel_id: *channel_id
+
+  bin/make_artifacts:
+    short_description: Generate the artifacts with the binary runtime
+    description:
+      - Invoke C(loadgen make-artifacts --config=...) as a local binary process.
+    options:
+      loadgen_bin_name: *loadgen_bin_name
+      loadgen_remote_config_dir: *loadgen_remote_config_dir
+      remote_config_dir: *remote_config_dir
+      loadgen_artifacts_config_file: *loadgen_artifacts_config_file
+
+  container/make_artifacts:
+    short_description: Generate the artifacts with the container runtime
+    description:
+      - Invoke C(loadgen make-artifacts --config=...) in a short-lived container.
+      - The config directory is mounted read-only, as it is for the running load generator, so the artifacts get a separate writable mount.
+    options:
+      loadgen_container_name: *loadgen_container_name
+      loadgen_image: *loadgen_image
+      loadgen_image_name: *loadgen_image_name
+      loadgen_image_tag: *loadgen_image_tag
+      loadgen_registry_endpoint: *loadgen_registry_endpoint
+      loadgen_container_config_dir: *loadgen_container_config_dir
+      loadgen_remote_config_dir: *loadgen_remote_config_dir
+      remote_config_dir: *remote_config_dir
+      remote_data_dir: *remote_data_dir
+      loadgen_artifacts_config_file: *loadgen_artifacts_config_file
+      loadgen_container_artifacts_dir: *loadgen_container_artifacts_dir
+      loadgen_remote_artifacts_dir: *loadgen_remote_artifacts_dir
 
   bin/start:
     short_description: Start the binary runtime

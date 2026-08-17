@@ -1,0 +1,74 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# =========================
+# Loadgen crypto material and genesis config block
+# =========================
+# Only used when the loadgen drives the committer through its own embedded mock
+# orderer. The mock orderer signs blocks with the consenter identities generated
+# here, and the sidecar verifies them against the orderer organization in the config
+# block generated alongside, so a single run has to produce both.
+#
+# This runs on the loadgen host rather than on the control node because that is
+# where the loadgen binary (or image) already is, and where the artifacts are read
+# from at run time. Only the config block is fetched back, to be handed to the
+# sidecar.
+- name: Ensure the Hyperledger Fabric-X Loadgen artifacts directory exists
+  ansible.builtin.file:
+    path: "{{ loadgen_remote_artifacts_dir }}"
+    state: directory
+    mode: "0o755"
+
+- name: Render the Hyperledger Fabric-X Loadgen artifacts configuration
+  ansible.builtin.template:
+    src: "loadgen-artifacts.yaml.j2"
+    dest: "{{ loadgen_remote_config_dir }}/{{ loadgen_artifacts_config_file }}"
+    mode: "0o644"
+  register: loadgen_artifacts_config_render
+
+# `make-artifacts` reuses whatever it finds under artifacts-path, so a changed
+# orderer address or channel ID would otherwise leave the previous config block in
+# place and the sidecar would keep dialling the old endpoint. This cannot be a handler:
+# the regeneration below, in this same block, has to see the cleared directory.
+- name: Remove stale Hyperledger Fabric-X Loadgen artifacts # noqa: no-handler
+  ansible.builtin.file:
+    path: "{{ loadgen_remote_artifacts_dir }}"
+    state: "{{ item }}"
+    mode: "0o755"
+  loop:
+    - absent
+    - directory
+  when:
+    - loadgen_artifacts_config_render is changed
+
+- name: Generate the Hyperledger Fabric-X Loadgen artifacts as binary
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.loadgen
+    tasks_from: bin/make_artifacts
+  when:
+    - loadgen_use_bin
+
+- name: Generate the Hyperledger Fabric-X Loadgen artifacts as container
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.loadgen
+    tasks_from: container/make_artifacts
+  when:
+    - loadgen_use_container
+
+- name: Ensure the control node Hyperledger Fabric-X Loadgen artifacts directory exists
+  ansible.builtin.file:
+    path: "{{ loadgen_artifacts_dir }}"
+    state: directory
+    mode: "0o755"
+  delegate_to: localhost
+
+# The committer sidecar bootstraps from this block, so it has to reach the control
+# node before the committer configs are rendered and transferred.
+- name: Fetch the generated genesis config block
+  ansible.builtin.fetch:
+    src: "{{ loadgen_remote_artifacts_dir }}/{{ loadgen_config_block_file }}"
+    dest: "{{ loadgen_artifacts_dir }}/{{ loadgen_config_block_file }}"
+    flat: true

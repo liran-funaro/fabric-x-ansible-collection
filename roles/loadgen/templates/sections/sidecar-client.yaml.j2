@@ -1,0 +1,29 @@
+{% if committer_sidecar_host is defined %}
+  # Sidecar client configuration. The loadgen receives transaction statuses from the
+  # sidecar's block delivery stream.
+  sidecar-client:
+    # Endpoint of the sidecar service to connect to for block delivery.
+    # Format: host:port.
+    endpoint: {{ hostvars[committer_sidecar_host].ansible_host }}:{{ hostvars[committer_sidecar_host].committer_rpc_port }}
+{% if (hostvars[committer_sidecar_host].committer_use_tls is defined) and hostvars[committer_sidecar_host].committer_use_tls %}
+    # Define TLS options and certificate paths used for secure communication
+    # between the sidecar-client and the sidecar.
+    tls:
+      # List of paths to CA certificate files for verifying server certificates.
+      ca-cert-paths:
+        - {{ loadgen_config_dir }}/tls/sidecar/ca.crt
+{% if (hostvars[committer_sidecar_host].committer_use_mtls is defined) and hostvars[committer_sidecar_host].committer_use_mtls %}
+      # Path to the client's TLS private key file.
+      key-path: {{ loadgen_config_dir }}/tls/server.key
+      # Path to the client's TLS certificate file (public key) for authentication.
+      cert-path: {{ loadgen_config_dir }}/tls/server.crt
+      # TLS mode for sidecar client connections: 'none' (no TLS), 'tls' (server auth only),
+      # or 'mtls' (mutual TLS with client cert verification).
+      mode: mtls
+{% else %}
+      # TLS mode for sidecar client connections: 'none' (no TLS), 'tls' (server auth only),
+      # or 'mtls' (mutual TLS with client cert verification).
+      mode: tls
+{% endif %}
+{% endif %}
+{% endif %}

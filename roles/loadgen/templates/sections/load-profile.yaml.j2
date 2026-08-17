@@ -92,6 +92,15 @@ load-profile:
   policy:
     # Channel ID for which transactions are generated. Must match the target blockchain channel.
     channel-id: {{ channel_id }}
+{% if loadgen_use_mock_orderer %}
+    # Directory holding the crypto material and genesis config block produced by
+    # `loadgen make-artifacts`. The embedded mock orderer serves and signs blocks with the
+    # consenter identities found here, and the identities that endorse namespace-creation
+    # transactions against the meta-namespace policy are loaded from here as well.
+    # An existing config block in this directory is read as-is, and it already carries the
+    # orderer endpoints, which is why `orderer-endpoints` is not set in this mode.
+    artifacts-path: {{ loadgen_config_artifacts_dir }}
+{% endif %}
     # Namespace-specific endorsement policies. Key is namespace ID (0 for default namespace).
     # Each namespace can have different signature schemes and endorsement requirements.
     # System namespaces (meta and config) must not be specified; their policies are derived

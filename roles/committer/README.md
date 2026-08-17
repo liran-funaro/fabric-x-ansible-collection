@@ -1315,13 +1315,11 @@ Render coordinator configuration, validator and verifier CA bundles, and optiona
 
 > Generate sidecar config
 
-Render sidecar configuration, upstream TLS bundles, and optional Kubernetes ConfigMap. Uses `orderer_assemblers`, `committer_coordinator`, `channel_id`, and MSP material.
+Render sidecar configuration, upstream TLS bundles, and optional Kubernetes ConfigMap. Uses `orderer_assemblers`, `committer_coordinator`, `genesis_config_block_path`, and MSP material.
 
 ```yaml
 - name: Generate sidecar config
   vars:
-    # Fabric channel identifier consumed by sidecar configuration.
-    channel_id: "mychannel"
     # Committer component handled by the entry point.
     committer_component_type: "coordinator"
     # Active config directory used by the committer runtime.
@@ -1429,8 +1427,12 @@ Render sidecar configuration, upstream TLS bundles, and optional Kubernetes Conf
     committer_use_openshift: false
     # Enable TLS material for the selected component.
     committer_use_tls: false
-    # Control-node configtxgen output directory containing the genesis config block.
-    configtxgen_artifacts_dir: "/tmp/fabricx/configtxgen-artifacts"
+    # Path on the control node of the genesis config block the sidecar bootstraps from. Written by configtxgen when a real ordering service is deployed, and by `loadgen make-artifacts` when `use_mock_orderer` is set.
+    genesis_config_block_path: "string"
+    # Inventory-wide switch that selects the mock orderer topology for every role that takes part in it. Feeds `committer_sidecar_use_mock_orderer`.
+    use_mock_orderer: false
+    # The ordering service is a mock orderer embedded in the load generator process rather than a real deployment. The sidecar then pulls blocks from the load generator at the endpoint recorded in the generated config block, over a plaintext connection, and no orderer hosts are expected in the inventory.
+    committer_sidecar_use_mock_orderer: "{{ use_mock_orderer | default(false) }}"
     # Control-node directory that stores fetched artifacts.
     fetched_artifacts_dir: "/tmp/fabricx/artifacts"
     # Inventory hosts for orderer assembler components.

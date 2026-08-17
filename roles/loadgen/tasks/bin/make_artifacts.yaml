@@ -1,0 +1,16 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+- name: Generate the Hyperledger Fabric-X Loadgen crypto material and genesis block
+  vars:
+    bin_run_with_tmux: false
+    bin_command: >-
+      {{ loadgen_bin_name }} make-artifacts
+      --config {{ loadgen_remote_config_dir }}/{{ loadgen_artifacts_config_file }}
+    bin_collect_logs: false
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.bin
+    tasks_from: start
