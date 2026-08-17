@@ -28,6 +28,10 @@
         - organization is defined
         - organization.namespaces is defined
         - organization.users is defined
+        # fxconfig submits its namespace envelopes through an orderer router, and with the mock
+        # orderer embedded in the load generator there is none to address. The load generator
+        # creates the namespaces itself over its own mock orderer instead.
+        - not (use_mock_orderer | default(false))
       block:
         - name: Get the endorser user
           ansible.builtin.include_role:
