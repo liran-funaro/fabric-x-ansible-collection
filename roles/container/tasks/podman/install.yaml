@@ -17,12 +17,16 @@
   changed_when: container_podman_check.rc != 0
 
 - name: Test podman with an hello-world container
+  # Pulls from a public registry, so it can only pass on a host with internet access. On an
+  # isolated host it fails and takes the whole play with it, which is why it is optional:
+  # such a host still needs podman installed to run images loaded from a local archive.
   vars:
     container_client: podman
     container_name: podman-hello-world
-    container_image: quay.io/podman/hello:latest
+    container_image: "{{ container_hello_world_image }}"
     container_run_detach_mode: false
     container_autoremove: true
   ansible.builtin.include_role:
     name: hyperledger.fabricx.container
     tasks_from: start
+  when: container_verify_with_hello_world

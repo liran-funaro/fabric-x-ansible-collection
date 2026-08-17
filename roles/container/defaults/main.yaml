@@ -10,6 +10,12 @@
 # Selects the container client to verify or use.
 # Leave it empty to auto-detect C(podman) first and then C(docker).
 container_client: "{{ lookup('env', 'CONTAINER_CLIENT') or '' }}"
+# Runs a hello-world container after installing Podman, to prove the runtime works.
+# Set this to false on a host with no route to a public registry. The check pulls O(container_hello_world_image), so there it fails and aborts the play, even though the host can still run images loaded from a local archive.
+container_verify_with_hello_world: true
+# Sets the image used to verify a fresh Podman installation.
+# Point this at a locally reachable image to keep the check on a host that cannot reach a public registry.
+container_hello_world_image: "quay.io/podman/hello:latest"
 # Sets the hostname inside the container.
 container_hostname: '{{ container_name | default(inventory_hostname) }}'
 # Provides the host uid used to build C(container_host_user).

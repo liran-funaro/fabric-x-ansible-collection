@@ -62,7 +62,7 @@ ansible-doc -t role hyperledger.fabricx.container
 
 > Install a supported container client
 
-Verifies the requested container runtime or auto-detects a host runtime, preferring Podman and then Docker. Installs the selected runtime on supported Linux hosts when it is missing and verifies that the client can run containers.
+Verifies the requested container runtime or auto-detects a host runtime, preferring Podman and then Docker. Installs the selected runtime on supported Linux hosts when it is missing and verifies that the client can run containers. The Podman path's end-to-end check is optional; see `podman/install`.
 
 ```yaml
 - name: Install a supported container client
@@ -601,10 +601,15 @@ Removes the host path used as a Docker volume. Uses `container_volume_path` as t
 
 > Install Podman on the target host
 
-Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks.
+Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry.
 
 ```yaml
 - name: Install Podman on the target host
+  vars:
+    # Runs a hello-world container after installing Podman, to prove the runtime works. Set this to false on a host with no route to a public registry. The check pulls `container_hello_world_image`, so there it fails and aborts the play, even though the host can still run images loaded from a local archive.
+    container_verify_with_hello_world: true
+    # Sets the image used to verify a fresh Podman installation. Point this at a locally reachable image to keep the check on a host that cannot reach a public registry.
+    container_hello_world_image: "quay.io/podman/hello:latest"
   ansible.builtin.include_role:
     name: hyperledger.fabricx.container
     tasks_from: podman/install

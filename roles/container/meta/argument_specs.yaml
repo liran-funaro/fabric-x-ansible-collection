@@ -33,6 +33,21 @@ argument_specs:
         description:
           - "Selects the container client to verify or use."
           - "Leave it empty to auto-detect C(podman) first and then C(docker)."
+      container_verify_with_hello_world: &container_verify_with_hello_world
+        type: bool
+        default: true
+        description:
+          - Runs a hello-world container after installing Podman, to prove the runtime works.
+          - Set this to false on a host with no route to a public registry. The check pulls
+            O(container_hello_world_image), so there it fails and aborts the play, even though
+            the host can still run images loaded from a local archive.
+      container_hello_world_image: &container_hello_world_image
+        type: str
+        default: "quay.io/podman/hello:latest"
+        description:
+          - Sets the image used to verify a fresh Podman installation.
+          - Point this at a locally reachable image to keep the check on a host that cannot
+            reach a public registry.
       container_socket: &container_socket
         type: str
         description:
@@ -323,6 +338,7 @@ argument_specs:
     description:
       - "Verifies the requested container runtime or auto-detects a host runtime, preferring Podman and then Docker."
       - "Installs the selected runtime on supported Linux hosts when it is missing and verifies that the client can run containers."
+      - "The Podman path's end-to-end check is optional; see C(podman/install)."
     options:
       container_client: *container_client
 
@@ -609,7 +625,10 @@ argument_specs:
     description:
       - "Installs the Podman runtime on supported hosts."
       - "Verifies that the Podman client is available for subsequent container lifecycle tasks."
-    options: {}
+      - "Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry."
+    options:
+      container_verify_with_hello_world: *container_verify_with_hello_world
+      container_hello_world_image: *container_hello_world_image
 
   podman/get_socket:
     short_description: Resolve the Podman socket from system information
