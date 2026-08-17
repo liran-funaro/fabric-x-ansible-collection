@@ -364,8 +364,16 @@ argument_specs:
           - "Example: C(0.01)."
       loadgen_latency_distribution: &loadgen_latency_distribution
         type: str
+        choices:
+          - uniform
+          - empty
         description:
           - Histogram distribution used for latency buckets.
+          - C(uniform) spreads O(loadgen_latency_buckets) equal width buckets over
+            O(loadgen_max_latency); C(empty) turns latency tracking off.
+          - The load generator also accepts C(fixed), which is left out here because it
+            needs an explicit list of bucket boundaries that this role does not render, and
+            panics on startup for anything it does not recognize.
           - "Example: C(uniform)."
       loadgen_max_latency: &loadgen_max_latency
         type: str
