@@ -1177,18 +1177,20 @@ Downloads the release archive once onto the control node and unpacks it onto the
   vars:
     # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
     yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Strips the build suffix from `yugabyte_release_version`. YugabyteDB uses both forms. The archive filename carries the full build, while the download path and the directory inside the archive use the version alone, so `2025.2.1.0-b141` is published at `releases/2025.2.1.0/` and unpacks into `yugabyte-2025.2.1.0`.
+    yugabyte_release_base_version: "{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}"
     # Names the YugabyteDB release archive to download.
     yugabyte_release_archive: "yugabyte-{{ yugabyte_release_version }}-linux-x86_64.tar.gz"
-    # Sets the URL the release archive is downloaded from. The default drops the build suffix from the version, because the release is published under the version alone while the archive keeps the full build.
-    yugabyte_release_url: "https://software.yugabyte.com/releases/{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}/{{ yugabyte_release_archive }}"
+    # Sets the URL the release archive is downloaded from.
+    yugabyte_release_url: "https://software.yugabyte.com/releases/{{ yugabyte_release_base_version }}/{{ yugabyte_release_archive }}"
     # Sets the control node directory holding the downloaded release archive.
     yugabyte_control_release_dir: "{{ control_node_dir }}/yugabyte"
     # Sets the control node path of the downloaded release archive.
     yugabyte_control_release_archive: "{{ yugabyte_control_release_dir }}/{{ yugabyte_release_archive }}"
     # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
     yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
-    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
-    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
     # Sets the YugabyteDB image tag.
     yugabyte_image_tag: 2025.2.1.0-b141
     # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
@@ -1211,12 +1213,14 @@ Creates the master data directories, assembles the `yb-master` command line, and
   vars:
     # Names the tmux session and log file used by the YugabyteDB binary on this host.
     yugabyte_bin_name: "{{ inventory_hostname }}"
-    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
-    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
     # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
     yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
     # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
     yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Strips the build suffix from `yugabyte_release_version`. YugabyteDB uses both forms. The archive filename carries the full build, while the download path and the directory inside the archive use the version alone, so `2025.2.1.0-b141` is published at `releases/2025.2.1.0/` and unpacks into `yugabyte-2025.2.1.0`.
+    yugabyte_release_base_version: "{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}"
     # Sets the YugabyteDB image tag.
     yugabyte_image_tag: 2025.2.1.0-b141
     # Sets the remote data directory used by YugabyteDB tasks.
@@ -1274,12 +1278,14 @@ Creates the tablet data directories, assembles the `yb-tserver` command line, st
   vars:
     # Names the tmux session and log file used by the YugabyteDB binary on this host.
     yugabyte_bin_name: "{{ inventory_hostname }}"
-    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
-    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
     # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
     yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
     # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
     yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Strips the build suffix from `yugabyte_release_version`. YugabyteDB uses both forms. The archive filename carries the full build, while the download path and the directory inside the archive use the version alone, so `2025.2.1.0-b141` is published at `releases/2025.2.1.0/` and unpacks into `yugabyte-2025.2.1.0`.
+    yugabyte_release_base_version: "{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}"
     # Sets the YugabyteDB image tag.
     yugabyte_image_tag: 2025.2.1.0-b141
     # Sets the remote data directory used by YugabyteDB tasks.
