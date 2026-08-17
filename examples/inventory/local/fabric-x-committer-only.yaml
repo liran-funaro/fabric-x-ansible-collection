@@ -120,6 +120,22 @@ all:
                     committer_use_mtls: true
                     committer_monitoring_mtls_clients:
                       - prometheus
+                    # How many transactions the sidecar lets sit unacknowledged before it stops
+                    # fetching blocks. This is the only backpressure in the pipeline, and it is
+                    # what makes an overload measurable rather than merely absorbed.
+                    #
+                    # The role default of 20,000,000 effectively disables it. Past saturation the
+                    # sidecar keeps pulling, the embedded mock orderer keeps buffering in memory,
+                    # and the offered rate stays pinned at whatever was configured while only the
+                    # committed rate reveals the real drain rate. End-to-end latency then grows
+                    # without bound, which also silences the load generator's latency histogram:
+                    # its tracking table is a fixed number of slots, so a sampled transaction is
+                    # evicted long before its status returns and nothing is ever observed.
+                    #
+                    # 100,000 is the committer's own default. It bounds in-flight work to a couple
+                    # of seconds at the rates this topology reaches, so the offered rate drops when
+                    # the committer cannot keep up and latency stays inside the histogram's range.
+                    committer_sidecar_waiting_txs_limit: 100000
                     organization:
                       <<: *Org1
                       fabric_ca_host: fca-org1
