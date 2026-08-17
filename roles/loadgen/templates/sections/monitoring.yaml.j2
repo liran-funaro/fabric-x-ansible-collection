@@ -70,7 +70,11 @@ monitoring:
       # Lower values reduce overhead but may miss outliers. 0.01 = 1% sampling.
       portion: {{ loadgen_latency_sampler_portion | default(0.01) }}
     buckets:
-      # Distribution type for latency histogram buckets: 'uniform' (equal width) or 'exponential'.
+      # Distribution type for latency histogram buckets: 'uniform' (equal width buckets
+      # spanning max-latency) or 'empty' (no latency tracking at all). The load generator
+      # also accepts 'fixed', but that needs an explicit list of bucket boundaries which
+      # this template does not render. Any other value makes the load generator panic on
+      # startup.
       distribution: {{ loadgen_latency_distribution | default('uniform') }}
       # Maximum latency value to track. Latencies above this are counted in overflow bucket.
       max-latency: {{ loadgen_max_latency | default('5s') }}

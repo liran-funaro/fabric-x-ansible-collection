@@ -367,7 +367,7 @@ Render the Loadgen configuration file and transfer config-side support artifacts
     loadgen_latency_sampler_prefix: "loadgen_lg_1"
     # Portion of transactions sampled for latency tracking.
     loadgen_latency_sampler_portion: 0.01
-    # Histogram distribution used for latency buckets.
+    # Histogram distribution used for latency buckets. `uniform` spreads `loadgen_latency_buckets` equal width buckets over `loadgen_max_latency`; `empty` turns latency tracking off. The load generator also accepts `fixed`, which is left out here because it needs an explicit list of bucket boundaries that this role does not render, and panics on startup for anything it does not recognize.
     loadgen_latency_distribution: "uniform"
     # Upper latency bound tracked by the histogram.
     loadgen_max_latency: "5s"
