@@ -96,11 +96,17 @@ argument_specs:
           - Sets the control node path of the downloaded release archive.
       yugabyte_install_dir: &yugabyte_install_dir
         type: path
-        default: "{{ remote_node_dir }}/yugabyte"
+        default: "{{ remote_deploy_dir }}/yugabyte"
         description:
           - Sets the host directory the release archive is unpacked into.
           - Point this at a data disk. The unpacked release is a few GB, which is more than a
             small root filesystem can usually spare.
+          - Keyed on O(remote_deploy_dir) rather than the per-host C(remote_node_dir), because
+            it has to resolve to the same absolute path on every node. A master bootstrapping
+            the cluster replicates the path of its initial system catalog snapshot through
+            Raft, so a follower whose release sits elsewhere cannot find that snapshot and
+            aborts. Sharing the path also means one copy of the release per machine rather
+            than one per node.
       yugabyte_home_dir: &yugabyte_home_dir
         type: path
         default: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
@@ -214,11 +220,12 @@ argument_specs:
         description:
           - "Sets the shared remote data directory consumed by YugabyteDB."
           - "Example: C(/var/hyperledger/fabric-x/yugabyte/data)."
-      remote_node_dir: &remote_node_dir
+      remote_deploy_dir: &remote_deploy_dir
         type: path
         description:
-          - "Sets the shared remote node directory that feeds C(yugabyte_install_dir)."
-          - "Example: C(/opt/hyperledger/fabric-x/yugabyte)."
+          - "Sets the base remote deployment directory that feeds C(yugabyte_install_dir)."
+          - "Shared by every node on a machine, and identical across machines."
+          - "Example: C(/data1/fabric-x)."
       control_node_dir: &control_node_dir
         type: path
         description:
@@ -1113,9 +1120,9 @@ argument_specs:
       yugabyte_control_release_dir: *yugabyte_control_release_dir
       yugabyte_control_release_archive: *yugabyte_control_release_archive
       yugabyte_install_dir: *yugabyte_install_dir
+      remote_deploy_dir: *remote_deploy_dir
       yugabyte_home_dir: *yugabyte_home_dir
       yugabyte_image_tag: *yugabyte_image_tag
-      remote_node_dir: *remote_node_dir
       control_node_dir: *control_node_dir
 
   bin/master/start:
@@ -1127,11 +1134,11 @@ argument_specs:
       yugabyte_bin_name: *yugabyte_bin_name
       yugabyte_home_dir: *yugabyte_home_dir
       yugabyte_install_dir: *yugabyte_install_dir
+      remote_deploy_dir: *remote_deploy_dir
       yugabyte_release_version: *yugabyte_release_version
       yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_image_tag: *yugabyte_image_tag
       yugabyte_remote_data_dir: *yugabyte_remote_data_dir
-      remote_node_dir: *remote_node_dir
       remote_data_dir: *remote_data_dir
       remote_config_dir: *remote_config_dir
       yugabyte_master_data_dirs: *yugabyte_master_data_dirs
@@ -1157,11 +1164,11 @@ argument_specs:
       yugabyte_bin_name: *yugabyte_bin_name
       yugabyte_home_dir: *yugabyte_home_dir
       yugabyte_install_dir: *yugabyte_install_dir
+      remote_deploy_dir: *remote_deploy_dir
       yugabyte_release_version: *yugabyte_release_version
       yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_image_tag: *yugabyte_image_tag
       yugabyte_remote_data_dir: *yugabyte_remote_data_dir
-      remote_node_dir: *remote_node_dir
       remote_data_dir: *remote_data_dir
       remote_config_dir: *remote_config_dir
       yugabyte_tablet_data_dirs: *yugabyte_tablet_data_dirs

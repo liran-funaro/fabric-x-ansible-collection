@@ -1187,14 +1187,14 @@ Downloads the release archive once onto the control node and unpacks it onto the
     yugabyte_control_release_dir: "{{ control_node_dir }}/yugabyte"
     # Sets the control node path of the downloaded release archive.
     yugabyte_control_release_archive: "{{ yugabyte_control_release_dir }}/{{ yugabyte_release_archive }}"
-    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
-    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare. Keyed on `remote_deploy_dir` rather than the per-host `remote_node_dir`, because it has to resolve to the same absolute path on every node. A master bootstrapping the cluster replicates the path of its initial system catalog snapshot through Raft, so a follower whose release sits elsewhere cannot find that snapshot and aborts. Sharing the path also means one copy of the release per machine rather than one per node.
+    yugabyte_install_dir: "{{ remote_deploy_dir }}/yugabyte"
+    # Sets the base remote deployment directory that feeds `yugabyte_install_dir`. Shared by every node on a machine, and identical across machines.
+    remote_deploy_dir: "/data1/fabric-x"
     # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
     yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
     # Sets the YugabyteDB image tag.
     yugabyte_image_tag: 2025.2.1.0-b141
-    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
-    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
     # Sets the control node working directory that feeds `yugabyte_control_release_dir`.
     control_node_dir: "./out/control-node"
   ansible.builtin.include_role:
@@ -1215,8 +1215,10 @@ Creates the master data directories, assembles the `yb-master` command line, and
     yugabyte_bin_name: "{{ inventory_hostname }}"
     # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
     yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
-    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
-    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare. Keyed on `remote_deploy_dir` rather than the per-host `remote_node_dir`, because it has to resolve to the same absolute path on every node. A master bootstrapping the cluster replicates the path of its initial system catalog snapshot through Raft, so a follower whose release sits elsewhere cannot find that snapshot and aborts. Sharing the path also means one copy of the release per machine rather than one per node.
+    yugabyte_install_dir: "{{ remote_deploy_dir }}/yugabyte"
+    # Sets the base remote deployment directory that feeds `yugabyte_install_dir`. Shared by every node on a machine, and identical across machines.
+    remote_deploy_dir: "/data1/fabric-x"
     # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
     yugabyte_release_version: "{{ yugabyte_image_tag }}"
     # Strips the build suffix from `yugabyte_release_version`. YugabyteDB uses both forms. The archive filename carries the full build, while the download path and the directory inside the archive use the version alone, so `2025.2.1.0-b141` is published at `releases/2025.2.1.0/` and unpacks into `yugabyte-2025.2.1.0`.
@@ -1225,8 +1227,6 @@ Creates the master data directories, assembles the `yb-master` command line, and
     yugabyte_image_tag: 2025.2.1.0-b141
     # Sets the remote data directory used by YugabyteDB tasks.
     yugabyte_remote_data_dir: "{{ remote_data_dir }}"
-    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
-    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
     # Sets the shared remote data directory consumed by YugabyteDB.
     remote_data_dir: "/var/hyperledger/fabric-x/yugabyte/data"
     # Sets the shared remote configuration directory consumed by YugabyteDB.
@@ -1280,8 +1280,10 @@ Creates the tablet data directories, assembles the `yb-tserver` command line, st
     yugabyte_bin_name: "{{ inventory_hostname }}"
     # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`. Named after `yugabyte_release_base_version`, because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
     yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
-    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
-    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare. Keyed on `remote_deploy_dir` rather than the per-host `remote_node_dir`, because it has to resolve to the same absolute path on every node. A master bootstrapping the cluster replicates the path of its initial system catalog snapshot through Raft, so a follower whose release sits elsewhere cannot find that snapshot and aborts. Sharing the path also means one copy of the release per machine rather than one per node.
+    yugabyte_install_dir: "{{ remote_deploy_dir }}/yugabyte"
+    # Sets the base remote deployment directory that feeds `yugabyte_install_dir`. Shared by every node on a machine, and identical across machines.
+    remote_deploy_dir: "/data1/fabric-x"
     # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
     yugabyte_release_version: "{{ yugabyte_image_tag }}"
     # Strips the build suffix from `yugabyte_release_version`. YugabyteDB uses both forms. The archive filename carries the full build, while the download path and the directory inside the archive use the version alone, so `2025.2.1.0-b141` is published at `releases/2025.2.1.0/` and unpacks into `yugabyte-2025.2.1.0`.
@@ -1290,8 +1292,6 @@ Creates the tablet data directories, assembles the `yb-tserver` command line, st
     yugabyte_image_tag: 2025.2.1.0-b141
     # Sets the remote data directory used by YugabyteDB tasks.
     yugabyte_remote_data_dir: "{{ remote_data_dir }}"
-    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
-    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
     # Sets the shared remote data directory consumed by YugabyteDB.
     remote_data_dir: "/var/hyperledger/fabric-x/yugabyte/data"
     # Sets the shared remote configuration directory consumed by YugabyteDB.

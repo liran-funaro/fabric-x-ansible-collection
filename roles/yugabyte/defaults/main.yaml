@@ -32,7 +32,8 @@ yugabyte_control_release_dir: '{{ control_node_dir }}/yugabyte'
 yugabyte_control_release_archive: '{{ yugabyte_control_release_dir }}/{{ yugabyte_release_archive }}'
 # Sets the host directory the release archive is unpacked into.
 # Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
-yugabyte_install_dir: '{{ remote_node_dir }}/yugabyte'
+# Keyed on O(remote_deploy_dir) rather than the per-host C(remote_node_dir), because it has to resolve to the same absolute path on every node. A master bootstrapping the cluster replicates the path of its initial system catalog snapshot through Raft, so a follower whose release sits elsewhere cannot find that snapshot and aborts. Sharing the path also means one copy of the release per machine rather than one per node.
+yugabyte_install_dir: '{{ remote_deploy_dir }}/yugabyte'
 # Sets the unpacked release directory holding C(bin/yb-master) and C(bin/yb-tserver).
 # Named after O(yugabyte_release_base_version), because that is what the archive unpacks into: the build suffix appears in the filename but not in the directory.
 yugabyte_home_dir: '{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}'
