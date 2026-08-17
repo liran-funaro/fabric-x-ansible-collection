@@ -15,3 +15,9 @@
     name: hyperledger.fabricx.yugabyte
     tasks_from: container/fetch_logs
   when: yugabyte_use_container
+
+- name: Fetch the Yugabyte DB binary logs
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/fetch_logs
+  when: yugabyte_use_bin

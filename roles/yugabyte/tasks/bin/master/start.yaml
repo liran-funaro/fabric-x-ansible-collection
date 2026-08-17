@@ -1,0 +1,57 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Same flags as container/master/start.yaml. The differences are only about where things
+# live: the data directories are host paths rather than a bind mount, TLS material is read
+# from the host config directory instead of /var/tls, and the process runs under tmux
+# through the shared bin role rather than under a container runtime.
+
+- name: Ensure the YugabyteDB Master data directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0o755"
+  loop: "{{ yugabyte_master_data_dirs }}"
+
+- name: Start the YugabyteDB Master binary
+  vars:
+    bin_name: "{{ yugabyte_bin_name }}"
+    bin_remote_dir: "{{ yugabyte_home_dir }}/bin"
+    bin_chdir: "{{ yugabyte_home_dir }}"
+    bin_command: >-
+      yb-master
+      --master_addresses={{ yugabyte_master_endpoints }}
+      --server_broadcast_addresses={{ ansible_host }}:{{ yugabyte_master_rpc_bind_port }}
+      --rpc_bind_addresses=0.0.0.0:{{ yugabyte_master_rpc_bind_port }}
+      --webserver_interface=0.0.0.0
+      --webserver_port={{ yugabyte_master_webserver_port }}
+      --replication_factor={{ yugabyte_master_hosts | length }}
+      --minloglevel={{ yugabyte_logs_level }}
+      --stderrthreshold={{ yugabyte_logs_level }}
+      --fs_data_dirs={{ yugabyte_master_data_dirs | join(',') }}
+      {% if yugabyte_use_tls %}
+      --certs_dir={{ yugabyte_remote_config_dir }}/tls
+      {% endif %}
+      {% if yugabyte_node_to_node_use_tls %}
+      --use_node_to_node_encryption=true
+      {% endif %}
+      {% if yugabyte_client_to_server_use_tls %}
+      --allow_insecure_connections=false
+      --use_client_to_server_encryption=true
+      {% endif %}
+      {% if yugabyte_webserver_use_tls %}
+      --webserver_ca_certificate_file={{ yugabyte_remote_config_dir }}/tls/ca.crt
+      --webserver_certificate_file={{ yugabyte_remote_config_dir }}/tls/node.{{ ansible_host }}.crt
+      --webserver_private_key_file={{ yugabyte_remote_config_dir }}/tls/node.{{ ansible_host }}.key
+      --webserver_redirect_http_to_https=true
+      {% endif %}
+      {{ yugabyte_master_extra_flags | join(' ') }}
+    bin_wait_until_running: true
+    bin_wait_port: "{{ yugabyte_master_rpc_bind_port }}"
+    bin_wait_timeout: "{{ yugabyte_bin_wait_timeout }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.bin
+    tasks_from: start

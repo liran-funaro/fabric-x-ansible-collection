@@ -9,3 +9,9 @@
     name: hyperledger.fabricx.yugabyte
     tasks_from: container/stop
   when: yugabyte_use_container
+
+- name: Stop the Yugabyte DB binaries
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/stop
+  when: yugabyte_use_bin

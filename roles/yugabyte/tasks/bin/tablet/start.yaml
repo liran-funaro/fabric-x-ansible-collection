@@ -1,0 +1,91 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Same flags as container/tablet/start.yaml, with host paths in place of bind mounts. See
+# bin/master/start.yaml for the rationale.
+#
+# yugabyte_tablet_data_dirs usually holds more than one path here: a tablet server given one
+# directory per physical disk spreads its tablets over them and reads and writes them in
+# parallel, which a single directory cannot do however fast the disk behind it is.
+
+- name: Ensure the YugabyteDB Tablet data directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0o755"
+  loop: "{{ yugabyte_tablet_data_dirs }}"
+
+- name: Start the YugabyteDB Tablet Server binary
+  vars:
+    bin_name: "{{ yugabyte_bin_name }}"
+    bin_remote_dir: "{{ yugabyte_home_dir }}/bin"
+    bin_chdir: "{{ yugabyte_home_dir }}"
+    bin_command: >-
+      yb-tserver
+      --tserver_master_addrs={{ yugabyte_master_endpoints }}
+      --server_broadcast_addresses={{ ansible_host }}:{{ yugabyte_tablet_rpc_bind_port }}
+      --rpc_bind_addresses=0.0.0.0:{{ yugabyte_tablet_rpc_bind_port }}
+      --webserver_interface=0.0.0.0
+      --webserver_port={{ yugabyte_tablet_webserver_port }}
+      --pgsql_proxy_bind_address=0.0.0.0:{{ yugabyte_tablet_pgsql_bind_port }}
+      --pgsql_proxy_webserver_port={{ yugabyte_tablet_pgsql_web_port }}
+      --cql_proxy_bind_address=0.0.0.0:{{ yugabyte_tablet_cql_bind_port }}
+      --cql_proxy_webserver_port={{ yugabyte_tablet_cql_web_port }}
+      --minloglevel={{ yugabyte_logs_level }}
+      --stderrthreshold={{ yugabyte_logs_level }}
+      --yb_enable_read_committed_isolation=true
+      --use_node_hostname_for_local_tserver=true
+      --fs_data_dirs={{ yugabyte_tablet_data_dirs | join(',') }}
+      {% if yugabyte_use_tls %}
+      --certs_dir={{ yugabyte_remote_config_dir }}/tls
+      {% endif %}
+      {% if yugabyte_node_to_node_use_tls %}
+      --use_node_to_node_encryption=true
+      {% endif %}
+      {% if yugabyte_client_to_server_use_tls %}
+      --allow_insecure_connections=false
+      --use_client_to_server_encryption=true
+      {% endif %}
+      {% if yugabyte_webserver_use_tls %}
+      --webserver_ca_certificate_file={{ yugabyte_remote_config_dir }}/tls/ca.crt
+      --webserver_certificate_file={{ yugabyte_remote_config_dir }}/tls/node.{{ ansible_host }}.crt
+      --webserver_private_key_file={{ yugabyte_remote_config_dir }}/tls/node.{{ ansible_host }}.key
+      --webserver_redirect_http_to_https=true
+      {% endif %}
+      {{ yugabyte_tablet_extra_flags | join(' ') }}
+    bin_wait_until_running: true
+    bin_wait_port: "{{ yugabyte_tablet_pgsql_bind_port }}"
+    bin_wait_timeout: "{{ yugabyte_bin_wait_timeout }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.bin
+    tasks_from: start
+
+- name: Initialize the database
+  # Once only, from the first tablet server: the script creates cluster wide objects, so
+  # running it per host would only produce duplicate-object errors on the rest.
+  vars:
+    bin_name: "{{ yugabyte_bin_name }}-init"
+    bin_remote_dir: "{{ yugabyte_home_dir }}/bin"
+    bin_chdir: "{{ yugabyte_home_dir }}"
+    bin_command: >-
+      ysqlsh
+      -h {{ ansible_host }}
+      -p {{ yugabyte_tablet_pgsql_bind_port }}
+      -U yugabyte
+      -f {{ yugabyte_remote_config_dir }}/init/{{ yugabyte_init_script_file }}
+    # Connects as the built-in "yugabyte" superuser rather than yugabyte_user, because the
+    # script's job is to create yugabyte_user and the database it owns. Same account and
+    # same absence of a password as container mode: YSQL authentication is left off, so
+    # there is no credential to supply and nothing to prompt for.
+    #
+    # Inline rather than under tmux: the play has to see whether the initialization
+    # succeeded, and a detached session would report success as soon as it was created.
+    bin_run_with_tmux: false
+    bin_collect_logs: false
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.bin
+    tasks_from: start
+  when: inventory_hostname == yugabyte_tablet_hosts[0]

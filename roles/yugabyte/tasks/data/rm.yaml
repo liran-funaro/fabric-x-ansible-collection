@@ -10,6 +10,21 @@
     state: absent
   when: yugabyte_use_container
 
+- name: Remove Yugabyte DB data directories
+  # Binary mode can spread a tablet server over one directory per disk, so every configured
+  # directory has to go. Leaving one behind would leave the node holding a partial copy of a
+  # cluster that no longer exists, which it would then try to rejoin.
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: >-
+    {{
+      yugabyte_master_data_dirs
+      if yugabyte_component_type == 'master'
+      else yugabyte_tablet_data_dirs
+    }}
+  when: yugabyte_use_bin
+
 - name: Delete Yugabyte data PVC
   kubernetes.core.k8s:
     state: absent
