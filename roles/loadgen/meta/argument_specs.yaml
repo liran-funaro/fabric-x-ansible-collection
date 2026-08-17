@@ -471,6 +471,13 @@ argument_specs:
           - The load generator cuts the blocks itself and serves them to the committer sidecar, which measures the committer without an ordering service in the path. It also generates the crypto material and the genesis config block, because the mock orderer signs the blocks it serves and the sidecar verifies them against the matching config block.
           - Requires exactly one host in the C(load_generators) group and no C(fabric_x_orderers) group in the inventory.
           - "Example: C(false)."
+      loadgen_mock_orderer_out_block_capacity: &loadgen_mock_orderer_out_block_capacity
+        type: int
+        default: 64
+        description:
+          - Number of cut blocks the embedded mock orderer buffers between the workload submitting them and the sidecar fetching them, which bounds the transactions in flight.
+          - "The mock orderer's own default buffers tens of millions of transactions, so an overloaded committer is absorbed rather than felt: the submitted rate stays at the configured rate while only the committed rate shows the real drain rate, and end-to-end latency grows past anything the latency histogram can represent. Keep this a small multiple of C(committer_sidecar_waiting_txs_limit) divided by the block size so saturation shows up as a drop in the submitted rate."
+          - "Example: C(64)."
       loadgen_mock_orderer_port: &loadgen_mock_orderer_port
         type: int
         default: 7050
@@ -799,6 +806,7 @@ argument_specs:
       use_mock_orderer: *use_mock_orderer
       loadgen_use_mock_orderer: *loadgen_use_mock_orderer
       loadgen_mock_orderer_port: *loadgen_mock_orderer_port
+      loadgen_mock_orderer_out_block_capacity: *loadgen_mock_orderer_out_block_capacity
       remote_data_dir: *remote_data_dir
       loadgen_config_artifacts_dir: *loadgen_config_artifacts_dir
       loadgen_remote_artifacts_dir: *loadgen_remote_artifacts_dir
