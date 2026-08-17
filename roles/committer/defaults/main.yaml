@@ -29,9 +29,9 @@ committer_source_code_package: cmd/committer
 committer_bin_package: '{{ committer_git_hub_url }}/{{ committer_git_repo }}/{{ committer_source_code_package }}'
 # Binary name managed by the committer role.
 committer_bin_name: committer
-# Timeout for the one-off `committer init-db` state database initialization, passed through as
-# --timeout. Creating the system tables and namespaces is quick on an idle database, but a
-# YugabyteDB cluster still electing leaders can take appreciably longer.
+# Timeout for the one-off C(committer init-db) state database initialization.
+# Passed straight through as C(--timeout), so it takes a Go duration string.
+# Creating the system tables and namespaces is quick on an idle database, but a YugabyteDB cluster that is still electing leaders can take appreciably longer.
 committer_db_init_timeout: 5m
 # Enable host-binary deployment mode.
 committer_use_bin: false

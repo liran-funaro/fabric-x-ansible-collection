@@ -16,16 +16,19 @@
   - [fetch\_logs](#fetch_logs)
   - [effective\_address](#effective_address)
   - [get\_metrics](#get_metrics)
+  - [db\_init](#db_init)
   - [start](#start)
   - [crypto/setup](#cryptosetup)
   - [crypto/fetch](#cryptofetch)
   - [bin/install](#bininstall)
   - [bin/build](#binbuild)
+  - [bin/db\_init](#bindb_init)
   - [bin/stop](#binstop)
   - [bin/rm](#binrm)
   - [bin/fetch\_logs](#binfetch_logs)
   - [bin/transfer](#bintransfer)
   - [container/start](#containerstart)
+  - [container/db\_init](#containerdb_init)
   - [container/stop](#containerstop)
   - [container/rm](#containerrm)
   - [container/fetch\_logs](#containerfetch_logs)
@@ -270,6 +273,28 @@ Query the component metrics endpoint and print the response body. Delegates addr
     tasks_from: get_metrics
 ```
 
+### db_init
+
+> Initialize the committer state database
+
+Creates the committer's system tables and namespaces by dispatching to the binary or container path. Required from committer Must run after the state database is up and before the committer components start, since the validator cannot open its RPC port until the schema exists. The Kubernetes and OpenShift modes are not implemented and only emit a warning.
+
+```yaml
+- name: Initialize the committer state database
+  vars:
+    # Enable host-binary deployment mode.
+    committer_use_bin: false
+    # Enable container deployment mode.
+    committer_use_container: "{{ (not committer_use_bin) and (not committer_use_k8s) and (not committer_use_openshift) }}"
+    # Enable Kubernetes deployment mode.
+    committer_use_k8s: false
+    # Selects the OpenShift deployment branch.
+    committer_use_openshift: false
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.committer
+    tasks_from: db_init
+```
+
 ### start
 
 > Start a committer component by type
@@ -412,6 +437,30 @@ Build the committer binary through the shared `bin` role Go build entry point. P
     tasks_from: bin/build
 ```
 
+### bin/db_init
+
+> Initialize the committer state database with the committer binary
+
+Runs `committer init-db` in the foreground against the validator's generated configuration. Runs without tmux and without log collection, since this exits rather than staying up as a service.
+
+```yaml
+- name: Initialize the committer state database with the committer binary
+  vars:
+    # Binary name managed by the committer role.
+    committer_bin_name: committer
+    # Generated config file name used by the selected component.
+    committer_config_file: "config-{{ committer_component_type }}.yml"
+    # Timeout for the one-off `committer init-db` state database initialization. Passed straight through as `--timeout`, so it takes a Go duration string. Creating the system tables and namespaces is quick on an idle database, but a YugabyteDB cluster that is still electing leaders can take appreciably longer.
+    committer_db_init_timeout: 5m
+    # Remote config directory managed by the role.
+    committer_remote_config_dir: "{{ remote_config_dir }}"
+    # Remote config directory used by delegated crypto tasks.
+    remote_config_dir: "/opt/fabricx/committer/config"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.committer
+    tasks_from: bin/db_init
+```
+
 ### bin/stop
 
 > Stop a committer binary
@@ -514,6 +563,34 @@ Run the container for the selected committer component, with its generated confi
   ansible.builtin.include_role:
     name: hyperledger.fabricx.committer
     tasks_from: container/start
+```
+
+### container/db_init
+
+> Initialize the committer state database with the committer container
+
+Runs `init-db` in a one-shot committer container with the validator's configuration mounted read-only. The container runs to completion and removes itself.
+
+```yaml
+- name: Initialize the committer state database with the committer container
+  vars:
+    # Generated config file name used by the selected component.
+    committer_config_file: "config-{{ committer_component_type }}.yml"
+    # Config directory inside the committer container.
+    committer_container_config_dir: /config
+    # Container name used by the committer container helper.
+    committer_container_name: "{{ inventory_hostname }}"
+    # Timeout for the one-off `committer init-db` state database initialization. Passed straight through as `--timeout`, so it takes a Go duration string. Creating the system tables and namespaces is quick on an idle database, but a YugabyteDB cluster that is still electing leaders can take appreciably longer.
+    committer_db_init_timeout: 5m
+    # Fully qualified committer image.
+    committer_image: "{{ committer_registry_endpoint }}/{{ committer_image_name }}:{{ committer_image_tag }}"
+    # Remote config directory managed by the role.
+    committer_remote_config_dir: "{{ remote_config_dir }}"
+    # Remote config directory used by delegated crypto tasks.
+    remote_config_dir: "/opt/fabricx/committer/config"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.committer
+    tasks_from: container/db_init
 ```
 
 ### container/stop
