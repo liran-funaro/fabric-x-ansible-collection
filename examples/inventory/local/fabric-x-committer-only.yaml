@@ -222,6 +222,46 @@ all:
         # entries, which the 10,000 default would evict around a fifth of. 100,000 keeps that loss
         # to a few percent for a few MB of memory.
         loadgen_monitoring_latency_max_tracked_txs: 100000
+        # Latency histogram bounds. The role default is 1000 equal width buckets over 5 s,
+        # which cannot describe this deployment: below saturation a transaction commits in tens
+        # of milliseconds and lands in the first bucket or two, while above saturation it takes
+        # several seconds and lands past the last bound, in the overflow bucket that counts
+        # towards the mean and towards no quantile. The percentile panels then read as empty in
+        # exactly the regime worth looking at.
+        #
+        # A 1-1.5-2-3-5-7.5 ladder per decade spans 2 ms to a minute in 27 bounds, so both
+        # regimes fall inside the range and the relative resolution is good enough for p50
+        # through p99 anywhere in it. It also costs 27 Prometheus series per histogram
+        # instead of 1000.
+        loadgen_latency_distribution: fixed
+        loadgen_latency_values:
+          - 0.002
+          - 0.005
+          - 0.0075
+          - 0.01
+          - 0.015
+          - 0.02
+          - 0.03
+          - 0.05
+          - 0.075
+          - 0.1
+          - 0.15
+          - 0.2
+          - 0.3
+          - 0.5
+          - 0.75
+          - 1
+          - 1.5
+          - 2
+          - 3
+          - 5
+          - 7.5
+          - 10
+          - 15
+          - 20
+          - 30
+          - 45
+          - 60
       hosts:
         orderer-loadgen:
           organization:
