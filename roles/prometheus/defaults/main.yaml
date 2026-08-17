@@ -41,11 +41,9 @@ prometheus_tls_private_key_file: server.key
 prometheus_tls_cert_file: server.crt
 # TCP port exposed by Prometheus and used by the container listener and Kubernetes Services.
 prometheus_port: 9090
-# Sets the address Prometheus listens on, prepended to --web.listen-address.
-# Defaults to an empty string, giving --web.listen-address=:9090, i.e. all interfaces, preserving
-# the previous behaviour. Set to 127.0.0.1 to restrict Prometheus to the loopback interface, so its
-# API and web UI are reachable only from the host itself or through an SSH tunnel. Only safe when
-# every Prometheus client runs on the same host.
+# Sets the address Prometheus listens on, prepended to C(--web.listen-address).
+# Defaults to an empty string, giving C(--web.listen-address=:9090), i.e. all interfaces. This preserves the previous behaviour.
+# Set to C(127.0.0.1) to restrict Prometheus to the loopback interface, so its API and web UI are reachable only from the host itself or through an SSH tunnel. Only safe when every Prometheus client (Grafana, and anything scraping its API) runs on the same host.
 prometheus_bind_address: ""
 # Enables the Kubernetes deployment path when set to C(true).
 prometheus_use_k8s: false

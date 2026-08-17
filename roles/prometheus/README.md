@@ -131,6 +131,8 @@ Renders the remote configuration, creates the data directory, and starts Prometh
     prometheus_http_config_file: http-config.yaml
     # TCP port exposed by Prometheus and used by the container listener and Kubernetes Services.
     prometheus_port: 9090
+    # Sets the address Prometheus listens on, prepended to `--web.listen-address`. Defaults to an empty string, giving `--web.listen-address=:9090`, i.e. all interfaces. This preserves the previous behaviour. Set to `127.0.0.1` to restrict Prometheus to the loopback interface, so its API and web UI are reachable only from the host itself or through an SSH tunnel. Only safe when every Prometheus client (Grafana, and anything scraping its API) runs on the same host.
+    prometheus_bind_address: ""
     # Enables HTTPS and TLS-aware health checks when set to `true`.
     prometheus_use_tls: false
   ansible.builtin.include_role:
