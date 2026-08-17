@@ -615,12 +615,157 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Little's law"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 384,
+      "interval": "1",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "range": true,
+          "useBackend": false,
+          "refId": "A",
+          "legendFormat": "Histogram",
+          "expr": "rate(loadgen_valid_transaction_latency_seconds_sum[$__rate_interval]) / rate(loadgen_valid_transaction_latency_seconds_count[$__rate_interval])"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "range": true,
+          "useBackend": false,
+          "refId": "B",
+          "legendFormat": "Little's law",
+          "expr": "(loadgen_transaction_sent_total - loadgen_transaction_received_total) / rate(loadgen_transaction_received_total[1m])"
+        }
+      ],
+      "title": "Mean Latency",
+      "type": "timeseries",
+      "description": "End-to-end transaction latency, derived two independent ways so they can be checked against each other. 'Histogram' is the mean of the load generator's own latency observations, which samples only a portion of transactions and stops reporting entirely once the round trip outlasts its fixed-size tracking table. \"Little's law\" divides the transactions in flight by the rate they are returning, so it needs no sampling and keeps working under saturation. The two should agree; the histogram going flat or absent while Little's law climbs means in-flight work has outgrown the tracking table."
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "id": 306,
       "panels": [],
@@ -693,7 +838,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 27
+        "y": 35
       },
       "id": 307,
       "interval": "1",
@@ -800,7 +945,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 27
+        "y": 35
       },
       "id": 308,
       "interval": "1",
@@ -907,7 +1052,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 27
+        "y": 35
       },
       "id": 309,
       "interval": "1",
@@ -1015,7 +1160,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "id": 310,
       "interval": "1",
@@ -1141,7 +1286,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 43
       },
       "id": 311,
       "interval": "1",
@@ -1266,7 +1411,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "id": 312,
       "interval": "1",
@@ -1374,7 +1519,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 51
       },
       "id": 313,
       "interval": "1",
@@ -1482,7 +1627,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "id": 314,
       "interval": "1",
@@ -1590,7 +1735,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 51
+        "y": 59
       },
       "id": 315,
       "interval": "1",
@@ -1698,7 +1843,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 51
+        "y": 59
       },
       "id": 316,
       "interval": "1",
@@ -1806,7 +1951,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 317,
       "interval": "1",
@@ -1913,7 +2058,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 67
       },
       "id": 318,
       "interval": "1",
@@ -2020,7 +2165,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 67
+        "y": 75
       },
       "id": 319,
       "interval": "1",
@@ -2127,7 +2272,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 67
+        "y": 75
       },
       "id": 320,
       "interval": "1",
@@ -2253,7 +2398,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 67
+        "y": 75
       },
       "id": 321,
       "interval": "1",
@@ -2318,7 +2463,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 115
+        "y": 123
       },
       "id": 335,
       "panels": [],
@@ -2392,7 +2537,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 116
+        "y": 124
       },
       "id": 336,
       "interval": "1",
@@ -2500,7 +2645,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 116
+        "y": 124
       },
       "id": 337,
       "interval": "1",
@@ -2608,7 +2753,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 124
+        "y": 132
       },
       "id": 338,
       "interval": "1",
@@ -2716,7 +2861,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 124
+        "y": 132
       },
       "id": 339,
       "interval": "1",
@@ -2823,7 +2968,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 124
+        "y": 132
       },
       "id": 340,
       "interval": "1",
@@ -2985,7 +3130,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 132
+        "y": 140
       },
       "id": 341,
       "interval": "1",
@@ -3093,7 +3238,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 132
+        "y": 140
       },
       "id": 342,
       "interval": "1",
@@ -3201,7 +3346,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 140
+        "y": 148
       },
       "id": 343,
       "interval": "1",
@@ -3309,7 +3454,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 140
+        "y": 148
       },
       "id": 344,
       "interval": "1",
@@ -3416,7 +3561,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 148
+        "y": 156
       },
       "id": 345,
       "interval": "1",
@@ -3523,7 +3668,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 148
+        "y": 156
       },
       "id": 346,
       "interval": "1",
@@ -3631,7 +3776,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 156
+        "y": 164
       },
       "id": 347,
       "interval": "1",
@@ -3739,7 +3884,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 156
+        "y": 164
       },
       "id": 348,
       "interval": "1",
@@ -3786,7 +3931,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 164
+        "y": 172
       },
       "id": 349,
       "panels": [],
@@ -3860,7 +4005,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 165
+        "y": 173
       },
       "id": 350,
       "interval": "1",
@@ -3985,7 +4130,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 165
+        "y": 173
       },
       "id": 351,
       "interval": "1",
@@ -4032,7 +4177,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 173
+        "y": 181
       },
       "id": 352,
       "panels": [],
@@ -4106,7 +4251,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 174
+        "y": 182
       },
       "id": 353,
       "interval": "1",
@@ -4214,7 +4359,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 174
+        "y": 182
       },
       "id": 354,
       "interval": "1",
@@ -4322,7 +4467,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 174
+        "y": 182
       },
       "id": 355,
       "interval": "1",
@@ -4430,7 +4575,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 182
+        "y": 190
       },
       "id": 356,
       "interval": "1",
@@ -4538,7 +4683,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 182
+        "y": 190
       },
       "id": 357,
       "interval": "1",
@@ -4645,7 +4790,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 190
+        "y": 198
       },
       "id": 358,
       "interval": "1",
@@ -4752,7 +4897,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 190
+        "y": 198
       },
       "id": 359,
       "interval": "1",
@@ -4859,7 +5004,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 190
+        "y": 198
       },
       "id": 360,
       "interval": "1",
@@ -4966,7 +5111,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 190
+        "y": 198
       },
       "id": 361,
       "interval": "1",
@@ -5074,7 +5219,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 198
+        "y": 206
       },
       "id": 362,
       "interval": "1",
@@ -5182,7 +5327,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 198
+        "y": 206
       },
       "id": 363,
       "interval": "1",
@@ -5290,7 +5435,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 198
+        "y": 206
       },
       "id": 364,
       "interval": "1",
@@ -5398,7 +5543,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 206
+        "y": 214
       },
       "id": 365,
       "interval": "1",
@@ -5506,7 +5651,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 206
+        "y": 214
       },
       "id": 366,
       "interval": "1",
@@ -5614,7 +5759,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 206
+        "y": 214
       },
       "id": 367,
       "interval": "1",
@@ -5722,7 +5867,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 214
+        "y": 222
       },
       "id": 368,
       "interval": "1",
@@ -5830,7 +5975,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 214
+        "y": 222
       },
       "id": 369,
       "interval": "1",
@@ -5938,7 +6083,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 214
+        "y": 222
       },
       "id": 370,
       "interval": "1",
@@ -5985,7 +6130,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 230
+        "y": 238
       },
       "id": 372,
       "panels": [],
@@ -6059,7 +6204,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 231
+        "y": 239
       },
       "id": 373,
       "interval": "1",
@@ -6166,7 +6311,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 231
+        "y": 239
       },
       "id": 374,
       "interval": "1",
@@ -6274,7 +6419,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 239
+        "y": 247
       },
       "id": 375,
       "interval": "1",
@@ -6399,7 +6544,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 239
+        "y": 247
       },
       "id": 376,
       "interval": "1",
@@ -6506,7 +6651,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 247
+        "y": 255
       },
       "id": 377,
       "interval": "1",
@@ -6613,7 +6758,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 247
+        "y": 255
       },
       "id": 378,
       "interval": "1",
@@ -6720,7 +6865,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 247
+        "y": 255
       },
       "id": 379,
       "interval": "1",
@@ -6827,7 +6972,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 255
+        "y": 263
       },
       "id": 380,
       "interval": "1",
@@ -6934,7 +7079,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 255
+        "y": 263
       },
       "id": 381,
       "interval": "1",
@@ -7042,7 +7187,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "id": 383,
       "interval": "1",
