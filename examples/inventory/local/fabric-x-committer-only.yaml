@@ -185,6 +185,18 @@ all:
         # Set loadgen_key_backref_rate (with loadgen_key_lookback_window) to introduce
         # commit-time contention, and loadgen_queries_rate to make reads carry committed
         # versions fetched from a query service, which this inventory does not deploy.
+        #
+        # Rate to start generating at. 'make limit-rate LIMIT=<tps>' changes it on a running
+        # deployment, which is how a ramp is driven; 0 removes the limit altogether. Keep an
+        # eye on free disk over a long run: with only fresh keys nothing is ever overwritten,
+        # so the state database and the sidecar ledger both grow with every transaction.
+        loadgen_limit_rate: 1000
+        # Generation-side throughput settings. The role defaults are deliberately tiny to keep
+        # functional tests cheap, and would cap generation well below what the committer can
+        # take, making the load generator itself the bottleneck under measurement.
+        loadgen_workers: 64
+        loadgen_stream_batches: 100
+        loadgen_stream_buffers_size: 100
       hosts:
         orderer-loadgen:
           organization:
