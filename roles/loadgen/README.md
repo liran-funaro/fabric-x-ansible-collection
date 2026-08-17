@@ -423,6 +423,8 @@ Render the Loadgen configuration file and transfer config-side support artifacts
     loadgen_use_mock_orderer: "{{ use_mock_orderer | default(false) }}"
     # Port the embedded mock orderer listens on when `use_mock_orderer` is set. Advertised in the generated config block, so the committer sidecar dials the load generator on this port.
     loadgen_mock_orderer_port: 7050
+    # Number of cut blocks the embedded mock orderer buffers between the workload submitting them and the sidecar fetching them, which bounds the transactions in flight. The mock orderer's own default buffers tens of millions of transactions, so an overloaded committer is absorbed rather than felt: the submitted rate stays at the configured rate while only the committed rate shows the real drain rate, and end-to-end latency grows past anything the latency histogram can represent. Keep this a small multiple of `committer_sidecar_waiting_txs_limit` divided by the block size so saturation shows up as a drop in the submitted rate.
+    loadgen_mock_orderer_out_block_capacity: 64
     # Base remote data directory that feeds `loadgen_remote_artifacts_dir`.
     remote_data_dir: "/var/hyperledger/fabricx/loadgen/lg-1/data"
     # Effective artifacts directory used inside rendered Loadgen configuration.

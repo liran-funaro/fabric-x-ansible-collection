@@ -29,6 +29,14 @@ sidecar-client:
   # test, and carries the same transactions the loadgen already generates locally.
   orderer-servers:
     - endpoint: 0.0.0.0:{{ loadgen_mock_orderer_port }}
+  # How many cut blocks the mock orderer holds between this workload submitting them and the
+  # sidecar fetching them, which is what bounds the transactions in flight. Leave it out and the
+  # mock orderer's own default buffers tens of millions of transactions, so an overloaded
+  # committer is absorbed rather than felt: the submitted rate stays at the configured rate while
+  # only the committed rate shows the real drain rate, and end-to-end latency grows past anything
+  # the latency histogram can represent. Keep it a small multiple of the sidecar's
+  # waiting-txs-limit so saturation shows up as a drop in the submitted rate.
+  out-block-capacity: {{ loadgen_mock_orderer_out_block_capacity }}
 {% else %}
 # ---------------------------------------------------------------------------
 # Orderer Client Settings

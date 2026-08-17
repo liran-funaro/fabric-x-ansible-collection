@@ -69,6 +69,9 @@ loadgen_log_format: "%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{s
 # The load generator cuts the blocks itself and serves them to the committer sidecar, which measures the committer without an ordering service in the path. It also generates the crypto material and the genesis config block, because the mock orderer signs the blocks it serves and the sidecar verifies them against the matching config block.
 # Requires exactly one host in the C(load_generators) group and no C(fabric_x_orderers) group in the inventory.
 loadgen_use_mock_orderer: '{{ use_mock_orderer | default(false) }}'
+# Number of cut blocks the embedded mock orderer buffers between the workload submitting them and the sidecar fetching them, which bounds the transactions in flight.
+# The mock orderer's own default buffers tens of millions of transactions, so an overloaded committer is absorbed rather than felt: the submitted rate stays at the configured rate while only the committed rate shows the real drain rate, and end-to-end latency grows past anything the latency histogram can represent. Keep this a small multiple of C(committer_sidecar_waiting_txs_limit) divided by the block size so saturation shows up as a drop in the submitted rate.
+loadgen_mock_orderer_out_block_capacity: 64
 # Port the embedded mock orderer listens on when C(use_mock_orderer) is set.
 # Advertised in the generated config block, so the committer sidecar dials the load generator on this port.
 loadgen_mock_orderer_port: 7050
