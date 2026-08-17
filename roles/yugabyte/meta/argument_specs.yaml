@@ -65,6 +65,15 @@ argument_specs:
           - Selects the YugabyteDB release used in binary mode.
           - Defaults to O(yugabyte_image_tag) so that binary and container mode run the same
             version unless one is set deliberately.
+      yugabyte_release_base_version: &yugabyte_release_base_version
+        type: str
+        default: "{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}"
+        description:
+          - Strips the build suffix from O(yugabyte_release_version).
+          - YugabyteDB uses both forms. The archive filename carries the full build, while the
+            download path and the directory inside the archive use the version alone, so
+            C(2025.2.1.0-b141) is published at C(releases/2025.2.1.0/) and unpacks into
+            C(yugabyte-2025.2.1.0).
       yugabyte_release_archive: &yugabyte_release_archive
         type: str
         default: "yugabyte-{{ yugabyte_release_version }}-linux-x86_64.tar.gz"
@@ -72,11 +81,9 @@ argument_specs:
           - Names the YugabyteDB release archive to download.
       yugabyte_release_url: &yugabyte_release_url
         type: str
-        default: "https://software.yugabyte.com/releases/{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}/{{ yugabyte_release_archive }}"
+        default: "https://software.yugabyte.com/releases/{{ yugabyte_release_base_version }}/{{ yugabyte_release_archive }}"
         description:
           - Sets the URL the release archive is downloaded from.
-          - The default drops the build suffix from the version, because the release is
-            published under the version alone while the archive keeps the full build.
       yugabyte_control_release_dir: &yugabyte_control_release_dir
         type: path
         default: "{{ control_node_dir }}/yugabyte"
@@ -96,9 +103,11 @@ argument_specs:
             small root filesystem can usually spare.
       yugabyte_home_dir: &yugabyte_home_dir
         type: path
-        default: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+        default: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_base_version }}"
         description:
           - Sets the unpacked release directory holding C(bin/yb-master) and C(bin/yb-tserver).
+          - "Named after O(yugabyte_release_base_version), because that is what the archive
+            unpacks into: the build suffix appears in the filename but not in the directory."
       yugabyte_master_data_dirs: &yugabyte_master_data_dirs
         type: list
         elements: path
@@ -1098,6 +1107,7 @@ argument_specs:
       - "Fetching on the control node rather than on each host is what allows database hosts with no route to the internet."
     options:
       yugabyte_release_version: *yugabyte_release_version
+      yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_release_archive: *yugabyte_release_archive
       yugabyte_release_url: *yugabyte_release_url
       yugabyte_control_release_dir: *yugabyte_control_release_dir
@@ -1118,6 +1128,7 @@ argument_specs:
       yugabyte_home_dir: *yugabyte_home_dir
       yugabyte_install_dir: *yugabyte_install_dir
       yugabyte_release_version: *yugabyte_release_version
+      yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_image_tag: *yugabyte_image_tag
       yugabyte_remote_data_dir: *yugabyte_remote_data_dir
       remote_node_dir: *remote_node_dir
@@ -1147,6 +1158,7 @@ argument_specs:
       yugabyte_home_dir: *yugabyte_home_dir
       yugabyte_install_dir: *yugabyte_install_dir
       yugabyte_release_version: *yugabyte_release_version
+      yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_image_tag: *yugabyte_image_tag
       yugabyte_remote_data_dir: *yugabyte_remote_data_dir
       remote_node_dir: *remote_node_dir
