@@ -361,8 +361,6 @@ Render the Loadgen configuration file and transfer config-side support artifacts
     loadgen_read_write_tx_val_size: 128
     # Signature scheme used for generated identities.
     loadgen_key_scheme: "ECDSA"
-    # Optional query tuning block consumed by the load profile.
-    loadgen_query_settings:{'size': 4, 'min_invalid_keys_portion': 0.1, 'shuffle': true}
     # Optional conflict injection block consumed by the load profile.
     loadgen_conflicts_settings:
       invalid_signatures: 1
