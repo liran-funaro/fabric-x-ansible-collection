@@ -44,6 +44,20 @@ For the same reason the sidecar reaches the mock orderer over plaintext. The sid
 
 `make init` does nothing here. It runs fxconfig, which submits the namespace-creation transactions through an ordering service, and the only one is inside the load generator. The load generator creates the namespaces itself instead, which is why `loadgen_generate_namespace` is set.
 
+## The Load Generator Cannot Be Restarted On Its Own
+
+The mock orderer keeps its chain in memory. Restart the load generator and the orderer starts again from an empty chain, while the sidecar's ledger and the state database are still where the previous run left them. The sidecar asks for the block after its current height, and the fresh orderer will never produce a block with that number, so block delivery stops: the ledger height stays put, the load generator keeps generating into its own orderer, and no transaction commits again.
+
+The loadgen-side counters mislead in the same situation for a second reason. A restarted load generator subscribes to the sidecar's delivery stream from block 0, so it counts every transaction already in the ledger as committed. `loadgen_transaction_committed_total` then reports the whole history rather than the current run, which can be orders of magnitude above `loadgen_transaction_sent_total`.
+
+So restarting the load generator means restarting the run:
+
+```shell
+make teardown && make setup && make start
+```
+
+To change the rate on a running deployment, use `make limit-rate LIMIT=<tps>` rather than restarting. Only a new binary or a changed config needs the full cycle, and that cycle has to clear the sidecar ledger and the state database with it.
+
 ## Differences From the Other Local Inventories
 
 | | Other local inventories | This inventory |
