@@ -1,0 +1,22 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+- name: Install the YugabyteDB release
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/install
+
+- name: Start the YugabyteDB Master binary
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/master/start
+  when: yugabyte_component_type == 'master'
+
+- name: Start the YugabyteDB Tablet Server binary
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/tablet/start
+  when: yugabyte_component_type == 'tablet'

@@ -39,11 +39,107 @@ argument_specs:
         default: false
         description:
           - "Enables Kubernetes mode for the YugabyteDB role."
+      yugabyte_use_bin: &yugabyte_use_bin
+        type: bool
+        default: false
+        description:
+          - "Enables binary mode for the YugabyteDB role, unpacking the release archive on the
+            host and running yb-master or yb-tserver directly under tmux."
+          - Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is
+            downloaded once onto the control node and unpacked from there onto each database
+            host, so the database hosts themselves need no route to the internet.
       yugabyte_use_container: &yugabyte_use_container
         type: bool
-        default: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+        default: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
         description:
           - "Enables container mode for the YugabyteDB role."
+      yugabyte_bin_name: &yugabyte_bin_name
+        type: str
+        default: "{{ inventory_hostname }}"
+        description:
+          - Names the tmux session and log file used by the YugabyteDB binary on this host.
+      yugabyte_release_version: &yugabyte_release_version
+        type: str
+        default: "{{ yugabyte_image_tag }}"
+        description:
+          - Selects the YugabyteDB release used in binary mode.
+          - Defaults to O(yugabyte_image_tag) so that binary and container mode run the same
+            version unless one is set deliberately.
+      yugabyte_release_archive: &yugabyte_release_archive
+        type: str
+        default: "yugabyte-{{ yugabyte_release_version }}-linux-x86_64.tar.gz"
+        description:
+          - Names the YugabyteDB release archive to download.
+      yugabyte_release_url: &yugabyte_release_url
+        type: str
+        default: "https://software.yugabyte.com/releases/{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}/{{ yugabyte_release_archive }}"
+        description:
+          - Sets the URL the release archive is downloaded from.
+          - The default drops the build suffix from the version, because the release is
+            published under the version alone while the archive keeps the full build.
+      yugabyte_control_release_dir: &yugabyte_control_release_dir
+        type: path
+        default: "{{ control_node_dir }}/yugabyte"
+        description:
+          - Sets the control node directory holding the downloaded release archive.
+      yugabyte_control_release_archive: &yugabyte_control_release_archive
+        type: path
+        default: "{{ yugabyte_control_release_dir }}/{{ yugabyte_release_archive }}"
+        description:
+          - Sets the control node path of the downloaded release archive.
+      yugabyte_install_dir: &yugabyte_install_dir
+        type: path
+        default: "{{ remote_node_dir }}/yugabyte"
+        description:
+          - Sets the host directory the release archive is unpacked into.
+          - Point this at a data disk. The unpacked release is a few GB, which is more than a
+            small root filesystem can usually spare.
+      yugabyte_home_dir: &yugabyte_home_dir
+        type: path
+        default: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+        description:
+          - Sets the unpacked release directory holding C(bin/yb-master) and C(bin/yb-tserver).
+      yugabyte_master_data_dirs: &yugabyte_master_data_dirs
+        type: list
+        elements: path
+        default:
+          - "{{ yugabyte_remote_data_dir }}"
+        description:
+          - Lists the data directories a master uses in binary mode.
+          - A master holds only cluster metadata, so one directory is normally enough.
+          - "Example: C(['/data1/yb-master'])."
+      yugabyte_tablet_data_dirs: &yugabyte_tablet_data_dirs
+        type: list
+        elements: path
+        default:
+          - "{{ yugabyte_remote_data_dir }}"
+        description:
+          - Lists the data directories a tablet server uses in binary mode.
+          - Give it one directory per physical disk. A tablet server spreads its tablets over
+            the directories it is given and reads and writes them in parallel, which a single
+            directory cannot do however fast the disk behind it is.
+          - "Example: C(['/data1/yb-tserver', '/data2/yb-tserver'])."
+      yugabyte_master_extra_flags: &yugabyte_master_extra_flags
+        type: list
+        elements: str
+        default: []
+        description:
+          - Appends extra command line flags to yb-master in binary mode.
+          - "Example: C(['--ysql_num_shards_per_tserver=4'])."
+      yugabyte_tablet_extra_flags: &yugabyte_tablet_extra_flags
+        type: list
+        elements: str
+        default: []
+        description:
+          - Appends extra command line flags to yb-tserver in binary mode.
+          - "Example: C(['--ysql_max_connections=600'])."
+      yugabyte_bin_wait_timeout: &yugabyte_bin_wait_timeout
+        type: int
+        default: 300
+        description:
+          - Seconds to wait for a YugabyteDB binary to start serving on its port.
+          - A tablet server has to reach the masters and be assigned tablets before it accepts
+            SQL, which on a cold cluster takes appreciably longer than a process start.
       yugabyte_use_tls: &yugabyte_use_tls
         type: bool
         default: false
@@ -109,6 +205,16 @@ argument_specs:
         description:
           - "Sets the shared remote data directory consumed by YugabyteDB."
           - "Example: C(/var/hyperledger/fabric-x/yugabyte/data)."
+      remote_node_dir: &remote_node_dir
+        type: path
+        description:
+          - "Sets the shared remote node directory that feeds C(yugabyte_install_dir)."
+          - "Example: C(/opt/hyperledger/fabric-x/yugabyte)."
+      control_node_dir: &control_node_dir
+        type: path
+        description:
+          - "Sets the control node working directory that feeds C(yugabyte_control_release_dir)."
+          - "Example: C(./out/control-node)."
       yugabyte_container_data_dir: &yugabyte_container_data_dir
         type: path
         default: "/var/data"
@@ -466,6 +572,7 @@ argument_specs:
       yugabyte_use_k8s: *yugabyte_use_k8s
       yugabyte_use_openshift: *yugabyte_use_openshift
       yugabyte_use_container: *yugabyte_use_container
+      yugabyte_use_bin: *yugabyte_use_bin
 
   stop:
     short_description: Stop YugabyteDB runtime
@@ -476,16 +583,21 @@ argument_specs:
       yugabyte_use_k8s: *yugabyte_use_k8s
       yugabyte_use_openshift: *yugabyte_use_openshift
       yugabyte_use_container: *yugabyte_use_container
+      yugabyte_use_bin: *yugabyte_use_bin
 
   teardown:
     short_description: Remove YugabyteDB runtime artifacts
     description:
       - "Removes the active YugabyteDB runtime in the selected deployment mode and then removes persisted role-managed data."
       - "Container mode deletes the running container and host data directory; Kubernetes mode deletes StatefulSets, Services, optional NodePort Services, and PVCs."
+      - "Binary mode stops the process and deletes its data directories, but keeps the unpacked
+        release so that a redeploy does not download and unpack it again, in the same way that
+        container mode keeps the image."
     options:
       yugabyte_use_k8s: *yugabyte_use_k8s
       yugabyte_use_openshift: *yugabyte_use_openshift
       yugabyte_use_container: *yugabyte_use_container
+      yugabyte_use_bin: *yugabyte_use_bin
 
   wipe:
     short_description: Wipe YugabyteDB state
@@ -498,11 +610,12 @@ argument_specs:
     short_description: Collect YugabyteDB logs
     description:
       - "Collects YugabyteDB logs through the selected deployment mode."
-      - "Container mode fetches logs from the named container; Kubernetes mode fetches pod logs selected by the resource labels."
+      - "Container mode fetches logs from the named container; Kubernetes mode fetches pod logs selected by the resource labels; binary mode fetches the tmux session's log file."
     options:
       yugabyte_use_k8s: *yugabyte_use_k8s
       yugabyte_use_openshift: *yugabyte_use_openshift
       yugabyte_use_container: *yugabyte_use_container
+      yugabyte_use_bin: *yugabyte_use_bin
 
   ping:
     short_description: Check YugabyteDB service ports
@@ -970,16 +1083,123 @@ argument_specs:
       yugabyte_remote_config_dir: *yugabyte_remote_config_dir
       yugabyte_use_tls: *yugabyte_use_tls
 
+  bin/start:
+    short_description: Dispatch YugabyteDB binary startup
+    description:
+      - "Installs the YugabyteDB release and selects the master or tablet startup path for the current host."
+    options:
+      yugabyte_component_type: *yugabyte_component_type
+
+  bin/install:
+    short_description: Install the YugabyteDB release archive
+    description:
+      - "Downloads the release archive once onto the control node and unpacks it onto the current host."
+      - "Runs the release's C(post_install.sh), which rewrites the library paths the binaries were linked against; C(yb-master) and C(yb-tserver) do not start without it."
+      - "Fetching on the control node rather than on each host is what allows database hosts with no route to the internet."
+    options:
+      yugabyte_release_version: *yugabyte_release_version
+      yugabyte_release_archive: *yugabyte_release_archive
+      yugabyte_release_url: *yugabyte_release_url
+      yugabyte_control_release_dir: *yugabyte_control_release_dir
+      yugabyte_control_release_archive: *yugabyte_control_release_archive
+      yugabyte_install_dir: *yugabyte_install_dir
+      yugabyte_home_dir: *yugabyte_home_dir
+      yugabyte_image_tag: *yugabyte_image_tag
+      remote_node_dir: *remote_node_dir
+      control_node_dir: *control_node_dir
+
+  bin/master/start:
+    short_description: Start a YugabyteDB master binary
+    description:
+      - "Creates the master data directories, assembles the C(yb-master) command line, and starts it under tmux."
+      - "Uses the same flags as the container path, reading TLS material from the host config directory instead of a bind mount."
+    options:
+      yugabyte_bin_name: *yugabyte_bin_name
+      yugabyte_home_dir: *yugabyte_home_dir
+      yugabyte_install_dir: *yugabyte_install_dir
+      yugabyte_release_version: *yugabyte_release_version
+      yugabyte_image_tag: *yugabyte_image_tag
+      yugabyte_remote_data_dir: *yugabyte_remote_data_dir
+      remote_node_dir: *remote_node_dir
+      remote_data_dir: *remote_data_dir
+      remote_config_dir: *remote_config_dir
+      yugabyte_master_data_dirs: *yugabyte_master_data_dirs
+      yugabyte_master_extra_flags: *yugabyte_master_extra_flags
+      yugabyte_bin_wait_timeout: *yugabyte_bin_wait_timeout
+      yugabyte_master_endpoints: *yugabyte_master_endpoints
+      yugabyte_master_hosts: *yugabyte_master_hosts
+      yugabyte_master_rpc_bind_port: *yugabyte_master_rpc_bind_port
+      yugabyte_master_webserver_port: *yugabyte_master_webserver_port
+      yugabyte_remote_config_dir: *yugabyte_remote_config_dir
+      yugabyte_logs_level: *yugabyte_logs_level
+      yugabyte_use_tls: *yugabyte_use_tls
+      yugabyte_node_to_node_use_tls: *yugabyte_node_to_node_use_tls
+      yugabyte_client_to_server_use_tls: *yugabyte_client_to_server_use_tls
+      yugabyte_webserver_use_tls: *yugabyte_webserver_use_tls
+
+  bin/tablet/start:
+    short_description: Start a YugabyteDB tablet server binary
+    description:
+      - "Creates the tablet data directories, assembles the C(yb-tserver) command line, starts it under tmux, and initializes the database from the first tablet host."
+      - "Give C(yugabyte_tablet_data_dirs) one directory per physical disk: a tablet server spreads its tablets over the directories it is given and works them in parallel."
+    options:
+      yugabyte_bin_name: *yugabyte_bin_name
+      yugabyte_home_dir: *yugabyte_home_dir
+      yugabyte_install_dir: *yugabyte_install_dir
+      yugabyte_release_version: *yugabyte_release_version
+      yugabyte_image_tag: *yugabyte_image_tag
+      yugabyte_remote_data_dir: *yugabyte_remote_data_dir
+      remote_node_dir: *remote_node_dir
+      remote_data_dir: *remote_data_dir
+      remote_config_dir: *remote_config_dir
+      yugabyte_tablet_data_dirs: *yugabyte_tablet_data_dirs
+      yugabyte_tablet_extra_flags: *yugabyte_tablet_extra_flags
+      yugabyte_bin_wait_timeout: *yugabyte_bin_wait_timeout
+      yugabyte_master_endpoints: *yugabyte_master_endpoints
+      yugabyte_tablet_hosts: *yugabyte_tablet_hosts
+      yugabyte_tablet_pgsql_bind_port: *yugabyte_tablet_pgsql_bind_port
+      yugabyte_tablet_rpc_bind_port: *yugabyte_tablet_rpc_bind_port
+      yugabyte_tablet_webserver_port: *yugabyte_tablet_webserver_port
+      yugabyte_tablet_pgsql_web_port: *yugabyte_tablet_pgsql_web_port
+      yugabyte_tablet_cql_bind_port: *yugabyte_tablet_cql_bind_port
+      yugabyte_tablet_cql_web_port: *yugabyte_tablet_cql_web_port
+      yugabyte_remote_config_dir: *yugabyte_remote_config_dir
+      yugabyte_init_script_file: *yugabyte_init_script_file
+      yugabyte_logs_level: *yugabyte_logs_level
+      yugabyte_use_tls: *yugabyte_use_tls
+      yugabyte_node_to_node_use_tls: *yugabyte_node_to_node_use_tls
+      yugabyte_client_to_server_use_tls: *yugabyte_client_to_server_use_tls
+      yugabyte_webserver_use_tls: *yugabyte_webserver_use_tls
+
+  bin/stop:
+    short_description: Stop a YugabyteDB binary
+    description:
+      - "Stops the tmux session running C(yb-master) or C(yb-tserver) on the current host."
+      - "This leaves the unpacked release, the data directories and the configuration in place for a later restart."
+    options:
+      yugabyte_bin_name: *yugabyte_bin_name
+
+  bin/fetch_logs:
+    short_description: Fetch logs from a YugabyteDB binary
+    description:
+      - "Collects the log file written by the tmux session running the YugabyteDB binary."
+    options:
+      yugabyte_bin_name: *yugabyte_bin_name
+
   data/rm:
     short_description: Remove YugabyteDB persisted data
     description:
       - "Deletes persisted YugabyteDB data for the selected deployment mode."
-      - "Container mode removes the host data directory; Kubernetes mode removes the PVC associated with the StatefulSet volume claim."
+      - "Container mode removes the host data directory; Kubernetes mode removes the PVC associated with the StatefulSet volume claim; binary mode removes each configured data directory, which may be one per disk."
     options:
       remote_data_dir: *remote_data_dir
       yugabyte_use_container: *yugabyte_use_container
       yugabyte_use_k8s: *yugabyte_use_k8s
       yugabyte_use_openshift: *yugabyte_use_openshift
+      yugabyte_use_bin: *yugabyte_use_bin
+      yugabyte_component_type: *yugabyte_component_type
+      yugabyte_master_data_dirs: *yugabyte_master_data_dirs
+      yugabyte_tablet_data_dirs: *yugabyte_tablet_data_dirs
       yugabyte_remote_data_dir: *yugabyte_remote_data_dir
       yugabyte_k8s_resource_name: *yugabyte_k8s_resource_name
       k8s_namespace: *k8s_namespace

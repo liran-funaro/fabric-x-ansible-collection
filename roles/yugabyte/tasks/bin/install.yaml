@@ -1,0 +1,63 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# YugabyteDB ships a prebuilt release archive rather than something the shared bin role can
+# build, so this installs from that archive instead of going through hyperledger.fabricx.bin.
+#
+# The archive is fetched once onto the control node and unpacked from there onto every
+# database host. That ordering is deliberate: it keeps a single download per run, and it is
+# the only arrangement that works when the database hosts have no route to the internet,
+# which is the normal case for an isolated cluster network.
+
+- name: Ensure the control node release directory exists
+  ansible.builtin.file:
+    path: "{{ yugabyte_control_release_dir }}"
+    state: directory
+    mode: "0o755"
+  delegate_to: localhost
+  run_once: true
+
+- name: Download the YugabyteDB release archive to the control node
+  ansible.builtin.get_url:
+    url: "{{ yugabyte_release_url }}"
+    dest: "{{ yugabyte_control_release_archive }}"
+    mode: "0o644"
+  delegate_to: localhost
+  run_once: true
+
+- name: Ensure the YugabyteDB install directory exists
+  ansible.builtin.file:
+    path: "{{ yugabyte_install_dir }}"
+    state: directory
+    mode: "0o755"
+
+- name: Unpack the YugabyteDB release
+  ansible.builtin.unarchive:
+    src: "{{ yugabyte_control_release_archive }}"
+    dest: "{{ yugabyte_install_dir }}"
+    # The archive contains a single yugabyte-<version> directory, so this doubles as the
+    # idempotence guard: an already unpacked release is left alone.
+    creates: "{{ yugabyte_home_dir }}/bin/yb-master"
+    extra_opts:
+      - --no-same-owner
+
+- name: Patch the YugabyteDB library paths
+  # The release archive is linked against libraries at paths that only exist inside
+  # Yugabyte's own build image. post_install.sh rewrites those to point inside the unpacked
+  # tree, and yb-master and yb-tserver do not start without it. It is safe to re-run, but
+  # the marker keeps it out of the change count once done.
+  ansible.builtin.command: "{{ yugabyte_home_dir }}/bin/post_install.sh"
+  args:
+    chdir: "{{ yugabyte_home_dir }}"
+    creates: "{{ yugabyte_home_dir }}/.post_install.done"
+
+- name: Mark the library paths as patched
+  ansible.builtin.file:
+    path: "{{ yugabyte_home_dir }}/.post_install.done"
+    state: touch
+    mode: "0o644"
+    modification_time: preserve
+    access_time: preserve

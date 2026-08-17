@@ -22,6 +22,14 @@
     tasks_from: container/rm
   when: yugabyte_use_container
 
+- name: Stop the Yugabyte DB binaries
+  # The unpacked release is deliberately left in place, the same way container mode leaves
+  # the image behind: only the process and its data go.
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/stop
+  when: yugabyte_use_bin
+
 - name: Remove Yugabyte DB data
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte

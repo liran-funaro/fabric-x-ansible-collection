@@ -40,6 +40,12 @@
   - [k8s/tablet/start](#k8stabletstart)
   - [k8s/tablet/rm](#k8stabletrm)
   - [k8s/crypto/transfer](#k8scryptotransfer)
+  - [bin/start](#binstart)
+  - [bin/install](#bininstall)
+  - [bin/master/start](#binmasterstart)
+  - [bin/tablet/start](#bintabletstart)
+  - [bin/stop](#binstop)
+  - [bin/fetch\_logs](#binfetch_logs)
   - [data/rm](#datarm)
   - [prometheus/get\_scrapers](#prometheusget_scrapers)
   - [openshift/start](#openshiftstart)
@@ -86,7 +92,9 @@ Builds master and tablet topology facts from `yugabyte_cluster`, derives the mas
     # Selects the OpenShift deployment branch.
     yugabyte_use_openshift: false
     # Enables container mode for the YugabyteDB role.
-    yugabyte_use_container: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    yugabyte_use_container: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    # Enables binary mode for the YugabyteDB role, unpacking the release archive on the host and running yb-master or yb-tserver directly under tmux. Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is downloaded once onto the control node and unpacked from there onto each database host, so the database hosts themselves need no route to the internet.
+    yugabyte_use_bin: false
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte
     tasks_from: start
@@ -106,7 +114,9 @@ Stops the YugabyteDB runtime for container deployments. Kubernetes mode is manag
     # Selects the OpenShift deployment branch.
     yugabyte_use_openshift: false
     # Enables container mode for the YugabyteDB role.
-    yugabyte_use_container: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    yugabyte_use_container: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    # Enables binary mode for the YugabyteDB role, unpacking the release archive on the host and running yb-master or yb-tserver directly under tmux. Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is downloaded once onto the control node and unpacked from there onto each database host, so the database hosts themselves need no route to the internet.
+    yugabyte_use_bin: false
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte
     tasks_from: stop
@@ -116,7 +126,7 @@ Stops the YugabyteDB runtime for container deployments. Kubernetes mode is manag
 
 > Remove YugabyteDB runtime artifacts
 
-Removes the active YugabyteDB runtime in the selected deployment mode and then removes persisted role-managed data. Container mode deletes the running container and host data directory; Kubernetes mode deletes StatefulSets, Services, optional NodePort Services, and PVCs.
+Removes the active YugabyteDB runtime in the selected deployment mode and then removes persisted role-managed data. Container mode deletes the running container and host data directory; Kubernetes mode deletes StatefulSets, Services, optional NodePort Services, and PVCs. Binary mode stops the process and deletes its data directories, but keeps the unpacked release so that a redeploy does not download and unpack it again, in the same way that container mode keeps the image.
 
 ```yaml
 - name: Remove YugabyteDB runtime artifacts
@@ -126,7 +136,9 @@ Removes the active YugabyteDB runtime in the selected deployment mode and then r
     # Selects the OpenShift deployment branch.
     yugabyte_use_openshift: false
     # Enables container mode for the YugabyteDB role.
-    yugabyte_use_container: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    yugabyte_use_container: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    # Enables binary mode for the YugabyteDB role, unpacking the release archive on the host and running yb-master or yb-tserver directly under tmux. Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is downloaded once onto the control node and unpacked from there onto each database host, so the database hosts themselves need no route to the internet.
+    yugabyte_use_bin: false
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte
     tasks_from: teardown
@@ -149,7 +161,7 @@ Runs teardown, removes persisted data, and deletes role-managed TLS and initiali
 
 > Collect YugabyteDB logs
 
-Collects YugabyteDB logs through the selected deployment mode. Container mode fetches logs from the named container; Kubernetes mode fetches pod logs selected by the resource labels.
+Collects YugabyteDB logs through the selected deployment mode. Container mode fetches logs from the named container; Kubernetes mode fetches pod logs selected by the resource labels; binary mode fetches the tmux session's log file.
 
 ```yaml
 - name: Collect YugabyteDB logs
@@ -159,7 +171,9 @@ Collects YugabyteDB logs through the selected deployment mode. Container mode fe
     # Selects the OpenShift deployment branch.
     yugabyte_use_openshift: false
     # Enables container mode for the YugabyteDB role.
-    yugabyte_use_container: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    yugabyte_use_container: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    # Enables binary mode for the YugabyteDB role, unpacking the release archive on the host and running yb-master or yb-tserver directly under tmux. Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is downloaded once onto the control node and unpacked from there onto each database host, so the database hosts themselves need no route to the internet.
+    yugabyte_use_bin: false
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte
     tasks_from: fetch_logs
@@ -1136,11 +1150,229 @@ Creates the Kubernetes Secret that exposes the YugabyteDB TLS key pair and CA ce
     tasks_from: k8s/crypto/transfer
 ```
 
+### bin/start
+
+> Dispatch YugabyteDB binary startup
+
+Installs the YugabyteDB release and selects the master or tablet startup path for the current host.
+
+```yaml
+- name: Dispatch YugabyteDB binary startup
+  vars:
+    # Selects whether the current host is handled as a YugabyteDB master or tablet node.
+    yugabyte_component_type: "tablet"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/start
+```
+
+### bin/install
+
+> Install the YugabyteDB release archive
+
+Downloads the release archive once onto the control node and unpacks it onto the current host. Runs the release's `post_install.sh`, which rewrites the library paths the binaries were linked against; `yb-master` and `yb-tserver` do not start without it. Fetching on the control node rather than on each host is what allows database hosts with no route to the internet.
+
+```yaml
+- name: Install the YugabyteDB release archive
+  vars:
+    # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
+    yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Names the YugabyteDB release archive to download.
+    yugabyte_release_archive: "yugabyte-{{ yugabyte_release_version }}-linux-x86_64.tar.gz"
+    # Sets the URL the release archive is downloaded from. The default drops the build suffix from the version, because the release is published under the version alone while the archive keeps the full build.
+    yugabyte_release_url: "https://software.yugabyte.com/releases/{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}/{{ yugabyte_release_archive }}"
+    # Sets the control node directory holding the downloaded release archive.
+    yugabyte_control_release_dir: "{{ control_node_dir }}/yugabyte"
+    # Sets the control node path of the downloaded release archive.
+    yugabyte_control_release_archive: "{{ yugabyte_control_release_dir }}/{{ yugabyte_release_archive }}"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
+    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the YugabyteDB image tag.
+    yugabyte_image_tag: 2025.2.1.0-b141
+    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
+    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
+    # Sets the control node working directory that feeds `yugabyte_control_release_dir`.
+    control_node_dir: "./out/control-node"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/install
+```
+
+### bin/master/start
+
+> Start a YugabyteDB master binary
+
+Creates the master data directories, assembles the `yb-master` command line, and starts it under tmux. Uses the same flags as the container path, reading TLS material from the host config directory instead of a bind mount.
+
+```yaml
+- name: Start a YugabyteDB master binary
+  vars:
+    # Names the tmux session and log file used by the YugabyteDB binary on this host.
+    yugabyte_bin_name: "{{ inventory_hostname }}"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
+    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
+    yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Sets the YugabyteDB image tag.
+    yugabyte_image_tag: 2025.2.1.0-b141
+    # Sets the remote data directory used by YugabyteDB tasks.
+    yugabyte_remote_data_dir: "{{ remote_data_dir }}"
+    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
+    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
+    # Sets the shared remote data directory consumed by YugabyteDB.
+    remote_data_dir: "/var/hyperledger/fabric-x/yugabyte/data"
+    # Sets the shared remote configuration directory consumed by YugabyteDB.
+    remote_config_dir: "/opt/hyperledger/fabric-x/yugabyte/config"
+    # Lists the data directories a master uses in binary mode. A master holds only cluster metadata, so one directory is normally enough.
+    yugabyte_master_data_dirs:
+      - "{{ yugabyte_remote_data_dir }}"
+    # Appends extra command line flags to yb-master in binary mode.
+    yugabyte_master_extra_flags:
+
+    # Seconds to wait for a YugabyteDB binary to start serving on its port. A tablet server has to reach the masters and be assigned tablets before it accepts SQL, which on a cold cluster takes appreciably longer than a process start.
+    yugabyte_bin_wait_timeout: 300
+    # Lists the master RPC endpoints used to bootstrap YugabyteDB tablets and health checks.
+    yugabyte_master_endpoints: "yb-master-1.example.com:7100,yb-master-2.example.com:7100,yb-master-3.example.com:7100"
+    # Provides the ordered list of master hosts used to compute replication factors.
+    yugabyte_master_hosts:
+      - "yb-master-1"
+      - "yb-master-2"
+      - "yb-master-3"
+    # Sets the master RPC bind port.
+    yugabyte_master_rpc_bind_port: 7100
+    # Sets the master webserver port.
+    yugabyte_master_webserver_port: 7000
+    # Sets the remote configuration directory used by YugabyteDB tasks.
+    yugabyte_remote_config_dir: "{{ remote_config_dir }}"
+    # Sets the YugabyteDB log verbosity threshold.
+    yugabyte_logs_level: 3
+    # Enables TLS asset handling for YugabyteDB.
+    yugabyte_use_tls: false
+    # Enables node-to-node TLS for YugabyteDB.
+    yugabyte_node_to_node_use_tls: "{{ yugabyte_use_tls }}"
+    # Enables client-to-server TLS for YugabyteDB RPC and SQL access.
+    yugabyte_client_to_server_use_tls: "{{ yugabyte_use_tls }}"
+    # Enables HTTPS for the YugabyteDB webserver.
+    yugabyte_webserver_use_tls: "{{ yugabyte_use_tls }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/master/start
+```
+
+### bin/tablet/start
+
+> Start a YugabyteDB tablet server binary
+
+Creates the tablet data directories, assembles the `yb-tserver` command line, starts it under tmux, and initializes the database from the first tablet host. Give `yugabyte_tablet_data_dirs` one directory per physical disk: a tablet server spreads its tablets over the directories it is given and works them in parallel.
+
+```yaml
+- name: Start a YugabyteDB tablet server binary
+  vars:
+    # Names the tmux session and log file used by the YugabyteDB binary on this host.
+    yugabyte_bin_name: "{{ inventory_hostname }}"
+    # Sets the unpacked release directory holding `bin/yb-master` and `bin/yb-tserver`.
+    yugabyte_home_dir: "{{ yugabyte_install_dir }}/yugabyte-{{ yugabyte_release_version }}"
+    # Sets the host directory the release archive is unpacked into. Point this at a data disk. The unpacked release is a few GB, which is more than a small root filesystem can usually spare.
+    yugabyte_install_dir: "{{ remote_node_dir }}/yugabyte"
+    # Selects the YugabyteDB release used in binary mode. Defaults to `yugabyte_image_tag` so that binary and container mode run the same version unless one is set deliberately.
+    yugabyte_release_version: "{{ yugabyte_image_tag }}"
+    # Sets the YugabyteDB image tag.
+    yugabyte_image_tag: 2025.2.1.0-b141
+    # Sets the remote data directory used by YugabyteDB tasks.
+    yugabyte_remote_data_dir: "{{ remote_data_dir }}"
+    # Sets the shared remote node directory that feeds `yugabyte_install_dir`.
+    remote_node_dir: "/opt/hyperledger/fabric-x/yugabyte"
+    # Sets the shared remote data directory consumed by YugabyteDB.
+    remote_data_dir: "/var/hyperledger/fabric-x/yugabyte/data"
+    # Sets the shared remote configuration directory consumed by YugabyteDB.
+    remote_config_dir: "/opt/hyperledger/fabric-x/yugabyte/config"
+    # Lists the data directories a tablet server uses in binary mode. Give it one directory per physical disk. A tablet server spreads its tablets over the directories it is given and reads and writes them in parallel, which a single directory cannot do however fast the disk behind it is.
+    yugabyte_tablet_data_dirs:
+      - "{{ yugabyte_remote_data_dir }}"
+    # Appends extra command line flags to yb-tserver in binary mode.
+    yugabyte_tablet_extra_flags:
+
+    # Seconds to wait for a YugabyteDB binary to start serving on its port. A tablet server has to reach the masters and be assigned tablets before it accepts SQL, which on a cold cluster takes appreciably longer than a process start.
+    yugabyte_bin_wait_timeout: 300
+    # Lists the master RPC endpoints used to bootstrap YugabyteDB tablets and health checks.
+    yugabyte_master_endpoints: "yb-master-1.example.com:7100,yb-master-2.example.com:7100,yb-master-3.example.com:7100"
+    # Provides the ordered list of tablet hosts used to initialize the first tablet.
+    yugabyte_tablet_hosts:
+      - "yb-tserver-1"
+      - "yb-tserver-2"
+      - "yb-tserver-3"
+    # Sets the tablet YSQL bind port.
+    yugabyte_tablet_pgsql_bind_port: 5433
+    # Sets the tablet RPC bind port.
+    yugabyte_tablet_rpc_bind_port: 9100
+    # Sets the tablet webserver port.
+    yugabyte_tablet_webserver_port: 9000
+    # Sets the tablet YSQL web UI port.
+    yugabyte_tablet_pgsql_web_port: 13000
+    # Sets the tablet YCQL bind port.
+    yugabyte_tablet_cql_bind_port: 9042
+    # Sets the tablet YCQL web UI port.
+    yugabyte_tablet_cql_web_port: 12000
+    # Sets the remote configuration directory used by YugabyteDB tasks.
+    yugabyte_remote_config_dir: "{{ remote_config_dir }}"
+    # Names the SQL initialization script used by tablet pods.
+    yugabyte_init_script_file: 01-yb-init.sql
+    # Sets the YugabyteDB log verbosity threshold.
+    yugabyte_logs_level: 3
+    # Enables TLS asset handling for YugabyteDB.
+    yugabyte_use_tls: false
+    # Enables node-to-node TLS for YugabyteDB.
+    yugabyte_node_to_node_use_tls: "{{ yugabyte_use_tls }}"
+    # Enables client-to-server TLS for YugabyteDB RPC and SQL access.
+    yugabyte_client_to_server_use_tls: "{{ yugabyte_use_tls }}"
+    # Enables HTTPS for the YugabyteDB webserver.
+    yugabyte_webserver_use_tls: "{{ yugabyte_use_tls }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/tablet/start
+```
+
+### bin/stop
+
+> Stop a YugabyteDB binary
+
+Stops the tmux session running `yb-master` or `yb-tserver` on the current host. This leaves the unpacked release, the data directories and the configuration in place for a later restart.
+
+```yaml
+- name: Stop a YugabyteDB binary
+  vars:
+    # Names the tmux session and log file used by the YugabyteDB binary on this host.
+    yugabyte_bin_name: "{{ inventory_hostname }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/stop
+```
+
+### bin/fetch_logs
+
+> Fetch logs from a YugabyteDB binary
+
+Collects the log file written by the tmux session running the YugabyteDB binary.
+
+```yaml
+- name: Fetch logs from a YugabyteDB binary
+  vars:
+    # Names the tmux session and log file used by the YugabyteDB binary on this host.
+    yugabyte_bin_name: "{{ inventory_hostname }}"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.yugabyte
+    tasks_from: bin/fetch_logs
+```
+
 ### data/rm
 
 > Remove YugabyteDB persisted data
 
-Deletes persisted YugabyteDB data for the selected deployment mode. Container mode removes the host data directory; Kubernetes mode removes the PVC associated with the StatefulSet volume claim.
+Deletes persisted YugabyteDB data for the selected deployment mode. Container mode removes the host data directory; Kubernetes mode removes the PVC associated with the StatefulSet volume claim; binary mode removes each configured data directory, which may be one per disk.
 
 ```yaml
 - name: Remove YugabyteDB persisted data
@@ -1148,11 +1380,21 @@ Deletes persisted YugabyteDB data for the selected deployment mode. Container mo
     # Sets the shared remote data directory consumed by YugabyteDB.
     remote_data_dir: "/var/hyperledger/fabric-x/yugabyte/data"
     # Enables container mode for the YugabyteDB role.
-    yugabyte_use_container: "{{ (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
+    yugabyte_use_container: "{{ (not yugabyte_use_bin) and (not yugabyte_use_k8s) and (not yugabyte_use_openshift) }}"
     # Enables Kubernetes mode for the YugabyteDB role.
     yugabyte_use_k8s: false
     # Selects the OpenShift deployment branch.
     yugabyte_use_openshift: false
+    # Enables binary mode for the YugabyteDB role, unpacking the release archive on the host and running yb-master or yb-tserver directly under tmux. Unlike the Fabric-X components, YugabyteDB is not built from source. The archive is downloaded once onto the control node and unpacked from there onto each database host, so the database hosts themselves need no route to the internet.
+    yugabyte_use_bin: false
+    # Selects whether the current host is handled as a YugabyteDB master or tablet node.
+    yugabyte_component_type: "tablet"
+    # Lists the data directories a master uses in binary mode. A master holds only cluster metadata, so one directory is normally enough.
+    yugabyte_master_data_dirs:
+      - "{{ yugabyte_remote_data_dir }}"
+    # Lists the data directories a tablet server uses in binary mode. Give it one directory per physical disk. A tablet server spreads its tablets over the directories it is given and reads and writes them in parallel, which a single directory cannot do however fast the disk behind it is.
+    yugabyte_tablet_data_dirs:
+      - "{{ yugabyte_remote_data_dir }}"
     # Sets the remote data directory used by YugabyteDB tasks.
     yugabyte_remote_data_dir: "{{ remote_data_dir }}"
     # Names the Kubernetes resources associated with the current host, including the derived NodePort Service when enabled.
