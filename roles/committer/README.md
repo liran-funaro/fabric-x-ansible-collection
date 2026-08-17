@@ -277,7 +277,7 @@ Query the component metrics endpoint and print the response body. Delegates addr
 
 > Initialize the committer state database
 
-Creates the committer's system tables and namespaces by dispatching to the binary or container path. Required from committer Must run after the state database is up and before the committer components start, since the validator cannot open its RPC port until the schema exists. The Kubernetes and OpenShift modes are not implemented and only emit a warning.
+Creates the committer's system tables and namespaces by dispatching to the binary or container path. Required from committer #617 onwards, which removed the implicit schema creation that the coordinator used to perform while starting. Must run after the state database is up and before the committer components start, since the validator cannot open its RPC port until the schema exists. The Kubernetes and OpenShift modes are not implemented and only emit a warning.
 
 ```yaml
 - name: Initialize the committer state database
@@ -448,6 +448,8 @@ Runs `committer init-db` in the foreground against the validator's generated con
   vars:
     # Binary name managed by the committer role.
     committer_bin_name: committer
+    # Committer component handled by the entry point.
+    committer_component_type: "coordinator"
     # Generated config file name used by the selected component.
     committer_config_file: "config-{{ committer_component_type }}.yml"
     # Timeout for the one-off `committer init-db` state database initialization. Passed straight through as `--timeout`, so it takes a Go duration string. Creating the system tables and namespaces is quick on an idle database, but a YugabyteDB cluster that is still electing leaders can take appreciably longer.
@@ -574,6 +576,8 @@ Runs `init-db` in a one-shot committer container with the validator's configurat
 ```yaml
 - name: Initialize the committer state database with the committer container
   vars:
+    # Committer component handled by the entry point.
+    committer_component_type: "coordinator"
     # Generated config file name used by the selected component.
     committer_config_file: "config-{{ committer_component_type }}.yml"
     # Config directory inside the committer container.
@@ -584,6 +588,12 @@ Runs `init-db` in a one-shot committer container with the validator's configurat
     committer_db_init_timeout: 5m
     # Fully qualified committer image.
     committer_image: "{{ committer_registry_endpoint }}/{{ committer_image_name }}:{{ committer_image_tag }}"
+    # Image name for the committer container.
+    committer_image_name: fabric-x-committer
+    # Image tag for the committer container.
+    committer_image_tag: 1.0.4
+    # Container registry endpoint for the committer image.
+    committer_registry_endpoint: "{{ lookup('env', 'COMMITTER_REGISTRY_ENDPOINT') or 'docker.io/hyperledger' }}"
     # Remote config directory managed by the role.
     committer_remote_config_dir: "{{ remote_config_dir }}"
     # Remote config directory used by delegated crypto tasks.
