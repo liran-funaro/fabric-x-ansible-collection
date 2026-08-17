@@ -323,6 +323,16 @@ Render the Loadgen configuration file and transfer config-side support artifacts
     loadgen_generate_load: true
     # Generated key size in bytes.
     loadgen_key_size: 32
+    # Size in bytes of the per-transaction metadata. `0` means a nil value. Leave unset to omit the key and use the committer's own default.
+    loadgen_tx_metadata_size: 150
+    # Average number of reads per transaction whose committed version is fetched from the query service before the transaction is signed. `0`, the default, disables querying entirely and reads keep nil versions. Must not exceed the version-bearing reads (`loadgen_read_only_tx_keys` + `loadgen_read_write_tx_keys`), and is independent of `loadgen_key_backref_rate`. When greater than `0` the loadgen role emits a top-level `query-client` connection to the `query-service` committer hosts, so at least one must exist in the inventory. Each query is a synchronous round-trip that blocks its loadgen worker before the transaction is signed, so the achievable rate is bounded by `loadgen_workers` divided by the query latency, independent of the rate limit. Measured on a single-machine YugabyteDB deployment at roughly 99ms mean query latency. The default `loadgen_workers` of one per vCPU (32) capped throughput at about 315 tps however high the rate limit was set, while 512 workers reached about 4800 tps and querying disabled reached about 15000 tps. Raise `loadgen_workers` when enabling this, or lower the rate so only a fraction of transactions query.
+    loadgen_queries_rate: 1
+    # Average number of backward key references (reused keys) per transaction; the remaining transaction slots create fresh keys. This is what creates commit-time contention. `0`, the default, gives every slot a fresh unique key — no reuse and no contention. Below `1` it behaves as a probability, so `0.3` means roughly 30% of transactions carry a single reference. Must not exceed the total slot count.
+    loadgen_key_backref_rate: 1
+    # Controls how far back references point. A reference is drawn from the keys that existed this many transactions ago. `0`, the default, draws the newest keys, which may still be in flight, so conflicting transactions can land in the same block. Larger values draw older, committed keys. Irrelevant when `loadgen_key_backref_rate` is `0`.
+    loadgen_tx_reference_gap: 100
+    # How many keys a backward reference is spread over, counting back from the gap position. `0`, the default, steps straight back from the gap position, producing the most contention. Larger values spread references out and reduce contention. Irrelevant when `loadgen_key_backref_rate` is `0`.
+    loadgen_key_lookback_window: 1024
     # Random seed used to build repeatable transaction streams.
     loadgen_tx_seed: 12345
     # Worker goroutine count used by the load profile.
