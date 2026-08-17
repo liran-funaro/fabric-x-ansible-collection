@@ -119,7 +119,41 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Target (rate limit)"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
@@ -179,10 +213,29 @@
           "range": true,
           "refId": "B",
           "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "range": true,
+          "useBackend": false,
+          "expr": "loadgen_transaction_rate_limit != 0",
+          "legendFormat": "Target (rate limit)",
+          "refId": "C"
         }
       ],
       "title": "Transaction Throughput",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Transactions the load generator offers and gets back. \"Target (rate limit)\" is the rate it is configured to aim for, so a gap below it means the generator itself cannot keep up and the committer is not the constraint. The series is hidden while the rate is unlimited (0)."
     },
     {
       "datasource": {
