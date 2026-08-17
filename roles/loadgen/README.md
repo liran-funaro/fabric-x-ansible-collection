@@ -378,12 +378,19 @@ Render the Loadgen configuration file and transfer config-side support artifacts
     loadgen_latency_sampler_prefix: "loadgen_lg_1"
     # Portion of transactions sampled for latency tracking.
     loadgen_latency_sampler_portion: 0.01
-    # Histogram distribution used for latency buckets. `uniform` spreads `loadgen_latency_buckets` equal width buckets over `loadgen_max_latency`; `empty` turns latency tracking off. The load generator also accepts `fixed`, which is left out here because it needs an explicit list of bucket boundaries that this role does not render, and panics on startup for anything it does not recognize.
+    # Histogram distribution used for latency buckets. `uniform` spreads `loadgen_latency_buckets` equal width buckets over `loadgen_max_latency`; `fixed` uses the explicit bounds in `loadgen_latency_values`; `empty` turns latency tracking off. The load generator panics on startup for anything it does not recognize.
     loadgen_latency_distribution: "uniform"
-    # Upper latency bound tracked by the histogram.
+    # Upper latency bound tracked by the histogram. Ignored when `loadgen_latency_distribution=fixed`.
     loadgen_max_latency: "5s"
-    # Number of latency histogram buckets.
+    # Number of latency histogram buckets. Ignored when `loadgen_latency_distribution=fixed`.
     loadgen_latency_buckets: 1000
+    # Latency histogram bucket upper bounds, in seconds. Required when `loadgen_latency_distribution=fixed` and ignored otherwise. Unlike `loadgen_latency_buckets`, the spacing need not be even, so a handful of bounds can cover both a healthy latency and an overloaded one. A latency above the last bound only reaches the overflow bucket, where it still counts towards the mean but no longer towards any quantile.
+    loadgen_latency_values:
+      - 0.005
+      - 0.05
+      - 0.5
+      - 5
+      - 30
     # Maximum generated transaction rate.
     loadgen_limit_rate: 2500
     # Batch size used by the stream pipeline.

@@ -366,25 +366,38 @@ argument_specs:
         type: str
         choices:
           - uniform
+          - fixed
           - empty
         description:
           - Histogram distribution used for latency buckets.
           - C(uniform) spreads O(loadgen_latency_buckets) equal width buckets over
-            O(loadgen_max_latency); C(empty) turns latency tracking off.
-          - The load generator also accepts C(fixed), which is left out here because it
-            needs an explicit list of bucket boundaries that this role does not render, and
-            panics on startup for anything it does not recognize.
+            O(loadgen_max_latency); C(fixed) uses the explicit bounds in
+            O(loadgen_latency_values); C(empty) turns latency tracking off.
+          - The load generator panics on startup for anything it does not recognize.
           - "Example: C(uniform)."
       loadgen_max_latency: &loadgen_max_latency
         type: str
         description:
           - Upper latency bound tracked by the histogram.
+          - Ignored when O(loadgen_latency_distribution=fixed).
           - "Example: C(5s)."
       loadgen_latency_buckets: &loadgen_latency_buckets
         type: int
         description:
           - Number of latency histogram buckets.
+          - Ignored when O(loadgen_latency_distribution=fixed).
           - "Example: C(1000)."
+      loadgen_latency_values: &loadgen_latency_values
+        type: list
+        elements: float
+        description:
+          - Latency histogram bucket upper bounds, in seconds.
+          - Required when O(loadgen_latency_distribution=fixed) and ignored otherwise.
+          - Unlike O(loadgen_latency_buckets), the spacing need not be even, so a handful of
+            bounds can cover both a healthy latency and an overloaded one. A latency above the
+            last bound only reaches the overflow bucket, where it still counts towards the mean
+            but no longer towards any quantile.
+          - "Example: C([0.005, 0.05, 0.5, 5, 30])."
       loadgen_monitoring_latency_max_tracked_txs:
         &loadgen_monitoring_latency_max_tracked_txs
         type: int
@@ -801,6 +814,7 @@ argument_specs:
       loadgen_latency_distribution: *loadgen_latency_distribution
       loadgen_max_latency: *loadgen_max_latency
       loadgen_latency_buckets: *loadgen_latency_buckets
+      loadgen_latency_values: *loadgen_latency_values
       loadgen_limit_rate: *loadgen_limit_rate
       loadgen_stream_batches: *loadgen_stream_batches
       loadgen_stream_buffers_size: *loadgen_stream_buffers_size
