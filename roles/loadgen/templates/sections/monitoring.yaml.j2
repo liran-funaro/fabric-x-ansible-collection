@@ -69,14 +69,26 @@ monitoring:
       # Portion of transactions to sample for latency measurement (0.0 to 1.0).
       # Lower values reduce overhead but may miss outliers. 0.01 = 1% sampling.
       portion: {{ loadgen_latency_sampler_portion | default(0.01) }}
+{% set loadgen_latency_bucket_distribution = loadgen_latency_distribution | default('uniform') %}
     buckets:
-      # Distribution type for latency histogram buckets: 'uniform' (equal width buckets
-      # spanning max-latency) or 'empty' (no latency tracking at all). The load generator
-      # also accepts 'fixed', but that needs an explicit list of bucket boundaries which
-      # this template does not render. Any other value makes the load generator panic on
-      # startup.
-      distribution: {{ loadgen_latency_distribution | default('uniform') }}
+      # Distribution type for latency histogram buckets: 'uniform' (bucket-count equal width
+      # buckets spanning max-latency), 'fixed' (the explicit boundaries listed under values)
+      # or 'empty' (no latency tracking at all). Any other value makes the load generator
+      # panic on startup.
+      distribution: {{ loadgen_latency_bucket_distribution }}
+{% if loadgen_latency_bucket_distribution == 'fixed' %}
+      # Bucket upper bounds, in seconds. A latency above the last bound lands in the overflow
+      # bucket, where it still counts towards the mean but no longer towards any quantile, so
+      # the last bound has to sit above the slowest latency worth reporting on. Uneven spacing
+      # is the point: it can be fine near the healthy latency and coarse near the overloaded
+      # one, which equal width buckets cannot do without a very large bucket-count.
+      values:
+{% for loadgen_latency_value in loadgen_latency_values %}
+        - {{ loadgen_latency_value }}
+{% endfor %}
+{% else %}
       # Maximum latency value to track. Latencies above this are counted in overflow bucket.
       max-latency: {{ loadgen_max_latency | default('5s') }}
       # Number of histogram buckets for latency distribution analysis.
       bucket-count: {{ loadgen_latency_buckets | default(1000) }}
+{% endif %}
