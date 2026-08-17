@@ -222,6 +222,15 @@ all:
         loadgen_workers: 64
         loadgen_stream_batches: 100
         loadgen_stream_buffers_size: 100
+        # Size of the latency tracker's table of in-flight sampled transactions. A sampled
+        # transaction whose slot is reused before its status returns is simply not measured, and
+        # that loss is not evenly spread: the longer a transaction takes, the likelier it is to be
+        # evicted, so an undersized table biases the reported mean downwards.
+        #
+        # At 1% sampling, ~40k tps and a few seconds in flight there are a couple of thousand live
+        # entries, which the 10,000 default would evict around a fifth of. 100,000 keeps that loss
+        # to a few percent for a few MB of memory.
+        loadgen_monitoring_latency_max_tracked_txs: 100000
       hosts:
         orderer-loadgen:
           organization:
