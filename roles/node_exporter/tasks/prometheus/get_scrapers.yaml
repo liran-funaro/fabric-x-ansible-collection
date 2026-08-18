@@ -76,10 +76,6 @@
       targets:
         - hosts: "{{ [current_node_exporter] }}"
           port_to_scrape: node_exporter_port
-          # Without this, "instance" is the address Prometheus scraped, so every dashboard
-          # identifies machines by IP and port. Name them instead.
-          label:
-            instance: "{{ current_node_exporter }}"
   ansible.builtin.set_fact:
     node_exporter_prometheus_scrape_services: "{{ (node_exporter_prometheus_scrape_services | default([])) + [node_exporter_scrape_service] }}"
   loop: "{{ node_exporter_container_hosts }}"

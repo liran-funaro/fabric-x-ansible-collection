@@ -83,21 +83,32 @@ scrape_configs:
     # Static list of targets for this job
     static_configs:
 {% for targets in current_service_to_scrape.targets %}
-      # List of targets to scrape
-      - targets:
 {% if targets.hosts is defined %}
+{# One target group per host, each carrying its own instance label. Prometheus otherwise names #}
+{# a target after the address it scraped, so every panel and legend reads like #}
+{# "10.241.64.13:5200" and a reader has to keep a table of addresses in their head. The #}
+{# inventory hostname says which component it is, and an explicit instance label in a static #}
+{# config is the supported way to override that default. #}
 {% for host in targets.hosts %}
+      # Target to scrape, named after its inventory host
+      - targets:
         - {{ hostvars[host].ansible_host }}:{{ hostvars[host][targets.port_to_scrape] }}
-{% endfor %}
+        labels:
+          instance: {{ host }}
+{% for label_name, label_value in (targets.label | default({})).items() %}
+{% if label_name != 'instance' %}
+          {{ label_name }}: {{ label_value }}
 {% endif %}
+{% endfor %}
+{% endfor %}
+{% else %}
+      - targets: []
 {% if targets.label is defined %}
         labels:
-{# Any label a scraper cares to attach, rather than a fixed pair. Setting "instance" here is #}
-{# the supported way to override the default, which is the raw address, so a panel can read #}
-{# "commit1" instead of "10.241.64.10:9111". #}
 {% for label_name, label_value in targets.label.items() %}
           {{ label_name }}: {{ label_value }}
 {% endfor %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
