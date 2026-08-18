@@ -67,7 +67,7 @@
       --minloglevel={{ yugabyte_logs_level }}
       --stderrthreshold={{ yugabyte_logs_level }}
       --yb_enable_read_committed_isolation=true
-      --use_node_hostname_for_local_tserver=true
+      --use_node_hostname_for_local_tserver={{ yugabyte_bin_use_node_hostname | ternary('true', 'false') }}
       --fs_data_dirs={{ yugabyte_tablet_data_dirs | join(',') }}
       {% if yugabyte_use_tls %}
       --certs_dir={{ yugabyte_remote_config_dir }}/tls

@@ -57,6 +57,10 @@ yugabyte_tablet_extra_flags: []
 # Seconds any single yb-admin readiness call may take before it is abandoned.
 # yb-admin blocks inside its client setup when the masters are not answering, so it has to be bounded for the surrounding retry loop to make progress rather than spending its whole budget on one hang.
 yugabyte_bin_admin_timeout: 15
+# Whether a tablet server advertises its OS hostname, rather than its address, as its own location.
+# This is what C(yb_servers()) reports, and C(yb_servers()) is how a YugabyteDB smart driver client with C(load_balance=true) discovers the nodes to spread its connections over. On bare machines the OS hostname usually resolves nowhere outside the machine itself, and the generated node certificates carry only IP SANs, so an advertised hostname is unusable twice over: the client cannot resolve it, and could not verify it under C(sslmode=verify-full) if it could. A client that cannot use any discovered node silently keeps every connection on its first endpoint, which caps the whole cluster's throughput at one node and exhausts that node's connection slots.
+# Container and Kubernetes deployments advertise the hostname unconditionally, because there the hostname is the resolvable service name.
+yugabyte_bin_use_node_hostname: false
 # Seconds to wait for a YugabyteDB binary to start serving on its port.
 # A tablet server has to reach the masters and be assigned tablets before it accepts SQL, which on a cold cluster takes appreciably longer than a process start.
 yugabyte_bin_wait_timeout: 300
