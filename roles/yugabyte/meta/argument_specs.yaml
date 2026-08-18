@@ -58,6 +58,18 @@ argument_specs:
         default: "{{ inventory_hostname }}"
         description:
           - Names the tmux session and log file used by the YugabyteDB binary on this host.
+      yugabyte_locale_packages: &yugabyte_locale_packages
+        type: list
+        elements: str
+        default:
+          - "{{ 'glibc-langpack-en' if ansible_facts['os_family'] == 'RedHat' else 'locales' }}"
+        description:
+          - Lists the packages that provide the C(en_US.UTF-8) locale in binary mode.
+          - YugabyteDB asks initdb for that locale by name, so a host without it cannot start a
+            tablet server at all. Container mode is unaffected because the image ships it.
+          - The default covers the RedHat family, where the locale arrives ready to use. On
+            Debian and Ubuntu, installing C(locales) is not by itself enough; the locale also
+            has to be generated, so add that step or preseed the image.
       yugabyte_release_version: &yugabyte_release_version
         type: str
         default: "{{ yugabyte_image_tag }}"
@@ -1116,6 +1128,7 @@ argument_specs:
       yugabyte_release_version: *yugabyte_release_version
       yugabyte_release_base_version: *yugabyte_release_base_version
       yugabyte_release_archive: *yugabyte_release_archive
+      yugabyte_locale_packages: *yugabyte_locale_packages
       yugabyte_release_url: *yugabyte_release_url
       yugabyte_control_release_dir: *yugabyte_control_release_dir
       yugabyte_control_release_archive: *yugabyte_control_release_archive
