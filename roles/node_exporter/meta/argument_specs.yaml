@@ -129,6 +129,14 @@ argument_specs:
         default: "{{ remote_deploy_dir }}/node-exporter/config"
         description:
           - Sets the remote Node Exporter configuration directory.
+      node_exporter_config_dir: &node_exporter_config_dir
+        type: path
+        default: "{{ node_exporter_remote_config_dir if node_exporter_use_bin else node_exporter_container_config_dir }}"
+        description:
+          - Config directory as the running exporter sees it, used inside rendered files.
+          - A container reads its config through a bind mount and a host binary reads it
+            directly, so a rendered path that assumed the mount sent the binary looking for its
+            certificate under the container's directory and the service died on startup.
       node_exporter_container_config_dir: &node_exporter_container_config_dir
         type: path
         default: /var/config
@@ -391,6 +399,8 @@ argument_specs:
       - Container mode writes the config under C(node_exporter_remote_config_dir) for bind-mounting into the runtime container.
       - Kubernetes mode also applies the ConfigMap that supplies the same config to the DaemonSet.
     options:
+      node_exporter_use_bin: *node_exporter_use_bin
+      node_exporter_config_dir: *node_exporter_config_dir
       remote_deploy_dir: *remote_deploy_dir
       node_exporter_remote_config_dir: *node_exporter_remote_config_dir
       node_exporter_container_config_dir: *node_exporter_container_config_dir

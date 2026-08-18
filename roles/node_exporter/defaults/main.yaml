@@ -19,6 +19,9 @@ node_exporter_image: "{{ node_exporter_registry_endpoint }}/{{ node_exporter_ima
 node_exporter_container_name: node-exporter
 # Sets the remote Node Exporter configuration directory.
 node_exporter_remote_config_dir: '{{ remote_deploy_dir }}/node-exporter/config'
+# Config directory as the running exporter sees it, used inside rendered files.
+# A container reads its config through a bind mount and a host binary reads it directly, so a rendered path that assumed the mount sent the binary looking for its certificate under the container's directory and the service died on startup.
+node_exporter_config_dir: '{{ node_exporter_remote_config_dir if node_exporter_use_bin else node_exporter_container_config_dir }}'
 # Sets the configuration mount point inside the Node Exporter container.
 node_exporter_container_config_dir: /var/config
 # Sets the rendered Node Exporter web configuration filename.
