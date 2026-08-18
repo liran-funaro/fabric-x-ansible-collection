@@ -245,6 +245,8 @@ Stops Prometheus when the container deployment path is enabled.
 ```yaml
 - name: Stop the Prometheus container deployment
   vars:
+    # Stops Prometheus when the deployment is stopped or torn down. Set to false to treat it as standing infrastructure instead, so that it keeps running between experiments.
+    prometheus_stop_with_deployment: true
     # Enables the container deployment path when set to `true`.
     prometheus_use_container: "{{ (not prometheus_use_k8s) and (not prometheus_use_openshift) }}"
     # Enables the Kubernetes deployment path when set to `true`.
