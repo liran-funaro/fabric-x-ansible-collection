@@ -557,7 +557,7 @@ Renders the main scrape configuration and supporting files on the remote host, i
     prometheus_tls_private_key_file: server.key
     # Filename used for the Prometheus TLS certificate.
     prometheus_tls_cert_file: server.crt
-    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap.
+    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap. A job may carry `grpc_targets` with `hosts` and `port` to rename the `grpc_target` label on the metrics it collects. A component that dials another labels its connection metrics with the address it dialled, which no scrape-target label can override; each listed host contributes a rule rewriting its `hostvars[host].ansible_host` plus the port named by `port` into the inventory hostname. For instance `grpc_targets: {hosts: ['verifier-1'], port: 'committer_rpc_port'}` turns `grpc_target="dns:///10.0.0.4:5110"` into `grpc_target="verifier-1"`. A value matching no rule is left as the component set it.
     prometheus_scrape_services:
       - job_name: "fabric-orderer"
         use_tls: True
@@ -612,7 +612,7 @@ Creates or updates the ConfigMap that carries the rendered Prometheus configurat
     prometheus_k8s_resource_name: "{{ inventory_hostname }}"
     # Value for the Kubernetes `app.kubernetes.io/part-of` label applied to Prometheus resources.
     prometheus_k8s_part_of: monitoring
-    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap.
+    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap. A job may carry `grpc_targets` with `hosts` and `port` to rename the `grpc_target` label on the metrics it collects. A component that dials another labels its connection metrics with the address it dialled, which no scrape-target label can override; each listed host contributes a rule rewriting its `hostvars[host].ansible_host` plus the port named by `port` into the inventory hostname. For instance `grpc_targets: {hosts: ['verifier-1'], port: 'committer_rpc_port'}` turns `grpc_target="dns:///10.0.0.4:5110"` into `grpc_target="verifier-1"`. A value matching no rule is left as the component set it.
     prometheus_scrape_services:
       - job_name: "fabric-orderer"
         use_tls: True
@@ -797,7 +797,7 @@ Sets the `prometheus_has_k8s_sd_scrapers` fact to `true` when at least one entry
 ```yaml
 - name: Detect whether any scrape service uses kubernetes_sd_configs
   vars:
-    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap.
+    # Optional scrape job definitions rendered into `prometheus.yaml` and the Kubernetes ConfigMap. A job may carry `grpc_targets` with `hosts` and `port` to rename the `grpc_target` label on the metrics it collects. A component that dials another labels its connection metrics with the address it dialled, which no scrape-target label can override; each listed host contributes a rule rewriting its `hostvars[host].ansible_host` plus the port named by `port` into the inventory hostname. For instance `grpc_targets: {hosts: ['verifier-1'], port: 'committer_rpc_port'}` turns `grpc_target="dns:///10.0.0.4:5110"` into `grpc_target="verifier-1"`. A value matching no rule is left as the component set it.
     prometheus_scrape_services:
       - job_name: "fabric-orderer"
         use_tls: True
