@@ -68,6 +68,10 @@
         targets:
           - hosts: "{{ committer_sidecar_hosts }}"
             port_to_scrape: committer_metrics_port
+        # The sidecar's connection metrics are labelled with the coordinator's address.
+        grpc_targets:
+          hosts: "{{ committer_coordinator_hosts }}"
+          port: committer_rpc_port
       - job_name: "coordinators_service.{{ hostvars[committer_coordinator_ref_host].organization.domain }}"
         use_tls: "{{ hostvars[committer_coordinator_ref_host].committer_monitoring_use_tls | default(hostvars[committer_coordinator_ref_host].committer_use_tls) | default(false) }}"
         use_mtls: "{{ hostvars[committer_coordinator_ref_host].committer_monitoring_use_mtls | default(hostvars[committer_coordinator_ref_host].committer_use_mtls) | default(false) }}"
@@ -75,6 +79,11 @@
         targets:
           - hosts: "{{ committer_coordinator_hosts }}"
             port_to_scrape: committer_metrics_port
+        # The coordinator's connection metrics are labelled with the address of each verifier
+        # and validator-committer it dials.
+        grpc_targets:
+          hosts: "{{ committer_verifier_hosts + committer_validator_hosts }}"
+          port: committer_rpc_port
       - job_name: "verifiers_service.{{ hostvars[committer_verifier_ref_host].organization.domain }}"
         use_tls: "{{ hostvars[committer_verifier_ref_host].committer_monitoring_use_tls | default(hostvars[committer_verifier_ref_host].committer_use_tls) | default(false) }}"
         use_mtls: "{{ hostvars[committer_verifier_ref_host].committer_monitoring_use_mtls | default(hostvars[committer_verifier_ref_host].committer_use_mtls) | default(false) }}"

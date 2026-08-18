@@ -107,6 +107,16 @@ argument_specs:
         elements: dict
         description:
           - Optional scrape job definitions rendered into C(prometheus.yaml) and the Kubernetes ConfigMap.
+          - >-
+            A job may carry C(grpc_targets) with C(hosts) and C(port) to rename the C(grpc_target)
+            label on the metrics it collects. A component that dials another labels its connection
+            metrics with the address it dialled, which no scrape-target label can override; each
+            listed host contributes a rule rewriting its C(hostvars[host].ansible_host) plus the
+            port named by C(port) into the inventory hostname.
+          - >-
+            For instance C(grpc_targets: {hosts: ['verifier-1'], port: 'committer_rpc_port'}) turns
+            C(grpc_target="dns:///10.0.0.4:5110") into C(grpc_target="verifier-1"). A value matching
+            no rule is left as the component set it.
           - "Example: C([{'job_name': 'fabric-orderer', 'use_tls': True, 'targets': [{'hosts': ['orderer-router-1', 'orderer-router-2'], 'port_to_scrape': 'orderer_operations_port', 'label': {'group': 'orderers'}}]}, {'job_name': 'node-exporter', 'targets': [{'hosts': ['worker-1'], 'port_to_scrape': 'node_exporter_port', 'label': {'group': 'workers', 'export_type': 'node'}}]}])."
       prometheus_use_tls: &prometheus_use_tls
         type: bool

@@ -55,14 +55,30 @@ scrape_configs:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if current_service_to_scrape.metric_relabel_configs is defined %}
+{% if current_service_to_scrape.metric_relabel_configs is defined or current_service_to_scrape.grpc_targets is defined %}
     metric_relabel_configs:
-{% for metrics_relabel_config in current_service_to_scrape.metric_relabel_configs %}
+{% for metrics_relabel_config in current_service_to_scrape.metric_relabel_configs | default([]) %}
       - source_labels: {{ metrics_relabel_config.source_labels }}
         regex: {{ metrics_relabel_config.regex | quote }}
         target_label: {{ metrics_relabel_config.target_label | quote }}
         replacement: {{ metrics_relabel_config.replacement | quote }}
 {% endfor %}
+{% if current_service_to_scrape.grpc_targets is defined %}
+{# A component that dials other components labels those metrics with the address it dialled, so #}
+{# a connection panel reads "dns:///10.241.64.4:5110" and the reader needs a table of addresses #}
+{# to tell which peer is down. The address is chosen by the dialling component's own config, so #}
+{# it cannot be named at the source the way a scrape target's instance label can. Rewriting it #}
+{# once here, on ingestion, gives every panel and ad-hoc query the inventory hostname for free. #}
+{# A grpc_target that matches no rule keeps whatever the component set, so a peer that is not #}
+{# in the list is still reported, by address. #}
+{% for grpc_host in current_service_to_scrape.grpc_targets.hosts %}
+{% set grpc_address = hostvars[grpc_host].ansible_host ~ ':' ~ hostvars[grpc_host][current_service_to_scrape.grpc_targets.port] %}
+      - source_labels: [grpc_target]
+        regex: {{ ('(dns:///)?' ~ (grpc_address | regex_escape)) | quote }}
+        target_label: "grpc_target"
+        replacement: {{ grpc_host | quote }}
+{% endfor %}
+{% endif %}
 {% endif %}
 {% if current_service_to_scrape.kubernetes_sd_configs is defined %}
     # Kubernetes service discovery configuration
