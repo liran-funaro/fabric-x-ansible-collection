@@ -1,0 +1,49 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Node Exporter ships a prebuilt release archive, so this installs from that rather than going
+# through hyperledger.fabricx.bin, which builds Go sources.
+#
+# The archive is fetched once onto the control node and copied from there to every machine.
+# That is the only arrangement that works when the machines have no route to the internet,
+# which is the normal case on an isolated cluster network.
+
+- name: Ensure the control node release directory exists
+  ansible.builtin.file:
+    path: "{{ node_exporter_control_release_dir }}"
+    state: directory
+    mode: "0o755"
+  delegate_to: localhost
+  run_once: true
+
+- name: Download the Node Exporter release archive to the control node
+  ansible.builtin.get_url:
+    url: "{{ node_exporter_release_url }}"
+    dest: "{{ node_exporter_control_release_archive }}"
+    mode: "0o644"
+  delegate_to: localhost
+  run_once: true
+
+- name: Unpack the Node Exporter release on the machine
+  ansible.builtin.unarchive:
+    src: "{{ node_exporter_control_release_archive }}"
+    dest: "{{ node_exporter_install_dir }}"
+    remote_src: false
+    extra_opts:
+      # Take the single binary out of the archive's versioned directory, so the installed
+      # path does not change with the release and the systemd unit never has to.
+      - --strip-components=1
+      - "{{ node_exporter_release_name }}/node_exporter"
+    creates: "{{ node_exporter_bin_path }}"
+    mode: "0o755"
+  become: true
+
+- name: Confirm the binary runs
+  # Cheap, and it catches an architecture mismatch here rather than as a systemd unit that
+  # restarts forever.
+  ansible.builtin.command: "{{ node_exporter_bin_path }} --version"
+  register: node_exporter_version_check
+  changed_when: false

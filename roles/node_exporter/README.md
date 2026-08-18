@@ -21,6 +21,9 @@
   - [crypto/fetch](#cryptofetch)
   - [crypto/rm](#cryptorm)
   - [crypto/openssl/generate\_cert](#cryptoopensslgenerate_cert)
+  - [bin/install](#bininstall)
+  - [bin/start](#binstart)
+  - [bin/stop](#binstop)
   - [container/start](#containerstart)
   - [container/stop](#containerstop)
   - [container/rm](#containerrm)
@@ -61,6 +64,8 @@ Starts Node Exporter using the backend selected for the host. In container mode,
 ```yaml
 - name: Start Node Exporter
   vars:
+    # Installs Node Exporter as a host binary under systemd instead of as a container. Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across `make stop` and `make teardown`. A gap in host metrics between runs is what makes two runs hard to compare. Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
+    node_exporter_use_bin: false
     # Enables the container backend.
     node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
@@ -81,6 +86,8 @@ Stops the container-backed Node Exporter workload for the host. Kubernetes deplo
 ```yaml
 - name: Stop Node Exporter
   vars:
+    # Installs Node Exporter as a host binary under systemd instead of as a container. Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across `make stop` and `make teardown`. A gap in host metrics between runs is what makes two runs hard to compare. Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
+    node_exporter_use_bin: false
     # Enables the container backend.
     node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
@@ -338,6 +345,97 @@ Delegates to the OpenSSL role to generate a self-signed certificate and private 
   ansible.builtin.include_role:
     name: hyperledger.fabricx.node_exporter
     tasks_from: crypto/openssl/generate_cert
+```
+
+### bin/install
+
+> Install the Node Exporter release on a machine
+
+Downloads the Node Exporter release archive once onto the control node and unpacks the binary from there onto the machine, so machines with no route to the internet are served too.
+
+```yaml
+- name: Install the Node Exporter release on a machine
+  vars:
+    # Sets the Node Exporter image tag used in the default image reference.
+    node_exporter_image_tag: v1.12.1
+    # Selects the Node Exporter release used in binary mode. Derived from `node_exporter_image_tag` without its leading `v`, so binary and container mode track the same version by default.
+    node_exporter_release_version: "{{ node_exporter_image_tag | regex_replace('^v', '') }}"
+    # Names the directory inside the release archive, which is also the archive stem.
+    node_exporter_release_name: "node_exporter-{{ node_exporter_release_version }}.linux-{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+    # Names the Node Exporter release archive.
+    node_exporter_release_archive: "{{ node_exporter_release_name }}.tar.gz"
+    # Sets the URL the release archive is downloaded from, on the control node.
+    node_exporter_release_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_release_version }}/{{ node_exporter_release_archive }}"
+    # Sets the control node working directory that holds downloaded release archives.
+    control_node_dir: "/data1/fabric-x/control-node"
+    # Sets the control node directory holding the downloaded release archive.
+    node_exporter_control_release_dir: "{{ control_node_dir }}/node-exporter"
+    # Sets the control node path of the downloaded release archive.
+    node_exporter_control_release_archive: "{{ node_exporter_control_release_dir }}/{{ node_exporter_release_archive }}"
+    # Sets the directory the Node Exporter binary is installed into.
+    node_exporter_install_dir: /usr/local/bin
+    # Sets the installed Node Exporter binary path used by the systemd unit.
+    node_exporter_bin_path: "{{ node_exporter_install_dir }}/node_exporter"
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.node_exporter
+    tasks_from: bin/install
+```
+
+### bin/start
+
+> Run Node Exporter as a systemd service
+
+Installs the unit, enables it and starts it, then waits for the metrics port. Enabled deliberately, so host metrics survive a reboot and span experiments.
+
+```yaml
+- name: Run Node Exporter as a systemd service
+  vars:
+    # Names the systemd service used in binary mode.
+    node_exporter_service_name: node-exporter
+    # Runs the Node Exporter service as this user. The default reads every mount point and process without special casing. A dedicated unprivileged user works too, at the cost of some collectors.
+    node_exporter_system_user: root
+    # Sets the installed Node Exporter binary path used by the systemd unit.
+    node_exporter_bin_path: "{{ node_exporter_install_dir }}/node_exporter"
+    # Sets the directory the Node Exporter binary is installed into.
+    node_exporter_install_dir: /usr/local/bin
+    # Address the exporter listens on. Empty means every interface.
+    node_exporter_bind_address: ""
+    # Sets the TCP port exposed by Node Exporter and seeds the default Kubernetes NodePort value.
+    node_exporter_port: 9100
+    # Enables the TLS web configuration and certificate paths when true.
+    node_exporter_use_tls: false
+    # Sets the base remote deployment directory used by `node_exporter_remote_config_dir`.
+    remote_deploy_dir: "/opt/fabricx/node-exporter"
+    # Sets the remote Node Exporter configuration directory.
+    node_exporter_remote_config_dir: "{{ remote_deploy_dir }}/node-exporter/config"
+    # Sets the rendered Node Exporter web configuration filename.
+    node_exporter_web_config_file: web-config.yaml
+    # Directory the textfile collector reads, for metrics written by other tooling.
+    node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+    # Appends extra command line flags to the Node Exporter service.
+    node_exporter_extra_flags:
+
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.node_exporter
+    tasks_from: bin/start
+```
+
+### bin/stop
+
+> Stop the Node Exporter service
+
+Does nothing unless `node_exporter_stop_with_deployment` is set, so that stopping a deployment does not create a hole in the machine's metrics.
+
+```yaml
+- name: Stop the Node Exporter service
+  vars:
+    # Names the systemd service used in binary mode.
+    node_exporter_service_name: node-exporter
+    # Stops and disables the Node Exporter service when the deployment is stopped. Off by default, so host metrics continue across experiments. Turn it on when releasing a machine entirely.
+    node_exporter_stop_with_deployment: false
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.node_exporter
+    tasks_from: bin/stop
 ```
 
 ### container/start

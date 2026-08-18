@@ -29,6 +29,20 @@
   "id": 2,
   "links": [
     {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "fabric-x"
+      ],
+      "targetBlank": false,
+      "title": "Dashboards",
+      "tooltip": "Switch to another Fabric-X dashboard",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
       "icon": "external link",
       "tags": [],
       "targetBlank": true,
@@ -23728,7 +23742,8 @@
   "revision": 1,
   "schemaVersion": 39,
   "tags": [
-    "linux"
+    "linux",
+    "fabric-x"
   ],
   "templating": {
     "list": [

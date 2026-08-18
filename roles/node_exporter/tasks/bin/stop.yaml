@@ -1,0 +1,17 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Stopping the deployment deliberately leaves Node Exporter running. It reports on the machine
+# rather than on any one experiment, and a gap in host metrics between runs is exactly what
+# makes two runs hard to compare. Set node_exporter_stop_with_deployment to override.
+
+- name: Stop Node Exporter
+  ansible.builtin.systemd_service:
+    name: "{{ node_exporter_service_name }}"
+    state: stopped
+    enabled: false
+  become: true
+  when: node_exporter_stop_with_deployment

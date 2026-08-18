@@ -52,7 +52,22 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "fabric-x"
+      ],
+      "targetBlank": false,
+      "title": "Dashboards",
+      "tooltip": "Switch to another Fabric-X dashboard",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -108,7 +123,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -200,7 +217,10 @@
       "id": 1,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -306,7 +326,10 @@
       "id": 2,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -400,7 +423,10 @@
       "id": 7,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -510,7 +536,10 @@
       "id": 13,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -607,7 +636,10 @@
       "id": 14,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -717,7 +749,10 @@
       "id": 5,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -814,7 +849,10 @@
       "id": 8,
       "options": {
         "legend": {
-          "calcs": ["max", "mean"],
+          "calcs": [
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
@@ -900,7 +938,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-9
+          "le": 1e-09
         },
         "legend": {
           "show": true
@@ -939,7 +977,9 @@
   ],
   "refresh": "5s",
   "schemaVersion": 38,
-  "tags": [],
+  "tags": [
+    "fabric-x"
+  ],
   "templating": {
     "list": [
       {

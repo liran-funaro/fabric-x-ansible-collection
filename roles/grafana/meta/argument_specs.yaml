@@ -174,6 +174,13 @@ argument_specs:
         default: false
         description:
           - Enables Kubernetes mode.
+      grafana_stop_with_deployment: &grafana_stop_with_deployment
+        type: bool
+        default: true
+        description:
+          - Stops Grafana when the deployment is stopped or torn down.
+          - Set to false to treat it as standing infrastructure instead, so that it
+            keeps running between experiments.
       grafana_use_container: &grafana_use_container
         type: bool
         default: "{{ (not grafana_use_k8s) and (not grafana_use_openshift) }}"
@@ -257,6 +264,7 @@ argument_specs:
     description:
       - Stops the Grafana container without removing the generated provisioning or TLS artifacts.
     options:
+      grafana_stop_with_deployment: *grafana_stop_with_deployment
       grafana_use_container: *grafana_use_container
       grafana_use_k8s: *grafana_use_k8s
       grafana_use_openshift: *grafana_use_openshift

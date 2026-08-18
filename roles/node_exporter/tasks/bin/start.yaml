@@ -1,0 +1,39 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Installed as a systemd unit rather than a tmux session. Node Exporter measures the machine,
+# not an experiment, so it has to survive "make stop", "make teardown" and a reboot: comparing
+# two runs is only possible if the host metrics span both.
+
+- name: Ensure the textfile collector directory exists
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: "{{ node_exporter_system_user }}"
+    mode: "0o755"
+  become: true
+
+- name: Install the Node Exporter systemd unit
+  ansible.builtin.template:
+    src: node-exporter.service.j2
+    dest: "/etc/systemd/system/{{ node_exporter_service_name }}.service"
+    mode: "0o644"
+  become: true
+  register: node_exporter_unit
+
+- name: Enable and start Node Exporter
+  ansible.builtin.systemd_service:
+    name: "{{ node_exporter_service_name }}"
+    state: "{{ 'restarted' if node_exporter_unit.changed else 'started' }}"
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Wait for Node Exporter to serve metrics
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ node_exporter_port }}"
+    timeout: 60

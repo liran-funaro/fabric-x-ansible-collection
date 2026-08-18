@@ -133,6 +133,13 @@ argument_specs:
         default: false
         description:
           - Enables the Kubernetes deployment path when set to C(true).
+      prometheus_stop_with_deployment: &prometheus_stop_with_deployment
+        type: bool
+        default: true
+        description:
+          - Stops Prometheus when the deployment is stopped or torn down.
+          - Set to false to treat it as standing infrastructure instead, so that it
+            keeps running between experiments.
       prometheus_use_container: &prometheus_use_container
         type: bool
         default: "{{ (not prometheus_use_k8s) and (not prometheus_use_openshift) }}"
@@ -335,6 +342,7 @@ argument_specs:
     description:
       - Stops Prometheus when the container deployment path is enabled.
     options:
+      prometheus_stop_with_deployment: *prometheus_stop_with_deployment
       prometheus_use_container: *prometheus_use_container
       prometheus_use_k8s: *prometheus_use_k8s
       prometheus_use_openshift: *prometheus_use_openshift

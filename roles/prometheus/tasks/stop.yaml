@@ -4,8 +4,16 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Prometheus holds the metric history. Stopping it with the deployment breaks every
+# comparison across experiments, because the gap lands exactly where the change under test
+# happened.
+#
+# Set prometheus_stop_with_deployment to false to keep it running across the lifecycle commands.
+
 - name: Stop Prometheus container
   ansible.builtin.include_role:
     name: hyperledger.fabricx.prometheus
     tasks_from: container/stop
-  when: prometheus_use_container
+  when:
+    - prometheus_use_container
+    - prometheus_stop_with_deployment

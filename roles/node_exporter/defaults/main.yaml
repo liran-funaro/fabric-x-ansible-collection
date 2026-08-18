@@ -29,6 +29,41 @@ node_exporter_use_tls: false
 node_exporter_tls_private_key_file: server.key
 # Sets the Node Exporter TLS certificate filename.
 node_exporter_tls_cert_file: server.crt
+# Installs Node Exporter as a host binary under systemd instead of as a container.
+# Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across C(make stop) and C(make teardown). A gap in host metrics between runs is what makes two runs hard to compare.
+# Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
+node_exporter_use_bin: false
+# Stops and disables the Node Exporter service when the deployment is stopped.
+# Off by default, so host metrics continue across experiments. Turn it on when releasing a machine entirely.
+node_exporter_stop_with_deployment: false
+# Names the systemd service used in binary mode.
+node_exporter_service_name: node-exporter
+# Runs the Node Exporter service as this user.
+# The default reads every mount point and process without special casing. A dedicated unprivileged user works too, at the cost of some collectors.
+node_exporter_system_user: root
+# Selects the Node Exporter release used in binary mode.
+# Derived from O(node_exporter_image_tag) without its leading C(v), so binary and container mode track the same version by default.
+node_exporter_release_version: "{{ node_exporter_image_tag | regex_replace('^v', '') }}"
+# Names the directory inside the release archive, which is also the archive stem.
+node_exporter_release_name: node_exporter-{{ node_exporter_release_version }}.linux-{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}
+# Names the Node Exporter release archive.
+node_exporter_release_archive: '{{ node_exporter_release_name }}.tar.gz'
+# Sets the URL the release archive is downloaded from, on the control node.
+node_exporter_release_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_release_version }}/{{ node_exporter_release_archive }}"
+# Sets the control node directory holding the downloaded release archive.
+node_exporter_control_release_dir: '{{ control_node_dir }}/node-exporter'
+# Sets the control node path of the downloaded release archive.
+node_exporter_control_release_archive: '{{ node_exporter_control_release_dir }}/{{ node_exporter_release_archive }}'
+# Sets the directory the Node Exporter binary is installed into.
+node_exporter_install_dir: /usr/local/bin
+# Sets the installed Node Exporter binary path used by the systemd unit.
+node_exporter_bin_path: '{{ node_exporter_install_dir }}/node_exporter'
+# Address the exporter listens on. Empty means every interface.
+node_exporter_bind_address: ""
+# Directory the textfile collector reads, for metrics written by other tooling.
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+# Appends extra command line flags to the Node Exporter service.
+node_exporter_extra_flags: []
 # Enables the Kubernetes backend or cleanup path when true.
 node_exporter_use_k8s: false
 # Enables the container backend.
