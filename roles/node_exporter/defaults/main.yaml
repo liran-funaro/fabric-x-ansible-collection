@@ -70,7 +70,7 @@ node_exporter_extra_flags: []
 # Enables the Kubernetes backend or cleanup path when true.
 node_exporter_use_k8s: false
 # Enables the container backend.
-node_exporter_use_container: '{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}'
+node_exporter_use_container: '{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}'
 # Sets the Kubernetes object name used for Node Exporter resources, including the Service, optional NodePort Service, and DaemonSet.
 node_exporter_k8s_resource_name: '{{ inventory_hostname }}'
 # Value for the Kubernetes C(app.kubernetes.io/part-of) label applied to Node Exporter resources.
