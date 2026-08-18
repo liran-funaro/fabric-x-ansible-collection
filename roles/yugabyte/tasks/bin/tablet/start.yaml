@@ -31,7 +31,11 @@
   #
   # yb-admin is the same readiness signal container mode uses for its master healthcheck: it
   # returns successfully only once the masters are serving RPCs and have elected a leader.
+  # Bounded per attempt: yb-admin blocks inside its client setup when the masters are not
+  # answering yet, so without a timeout the first attempt swallows the whole retry budget in
+  # one hang instead of retrying.
   ansible.builtin.command: >-
+    timeout {{ yugabyte_bin_admin_timeout }}
     {{ yugabyte_home_dir }}/bin/yb-admin
     --master_addresses {{ yugabyte_master_endpoints }}
     {% if yugabyte_client_to_server_use_tls %}

@@ -1307,6 +1307,8 @@ Creates the tablet data directories, assembles the `yb-tserver` command line, st
 
     # Seconds to wait for a YugabyteDB binary to start serving on its port. A tablet server has to reach the masters and be assigned tablets before it accepts SQL, which on a cold cluster takes appreciably longer than a process start.
     yugabyte_bin_wait_timeout: 300
+    # Seconds any single yb-admin readiness call may take before it is abandoned. yb-admin blocks inside its client setup when the masters are not answering, so it has to be bounded for the surrounding retry loop to make progress rather than spending its whole budget on one hang.
+    yugabyte_bin_admin_timeout: 15
     # Lists the master RPC endpoints used to bootstrap YugabyteDB tablets and health checks.
     yugabyte_master_endpoints: "yb-master-1.example.com:7100,yb-master-2.example.com:7100,yb-master-3.example.com:7100"
     # Provides the ordered list of tablet hosts used to initialize the first tablet.

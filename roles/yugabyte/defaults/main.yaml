@@ -54,6 +54,9 @@ yugabyte_tablet_data_dirs:
 yugabyte_master_extra_flags: []
 # Appends extra command line flags to yb-tserver in binary mode.
 yugabyte_tablet_extra_flags: []
+# Seconds any single yb-admin readiness call may take before it is abandoned.
+# yb-admin blocks inside its client setup when the masters are not answering, so it has to be bounded for the surrounding retry loop to make progress rather than spending its whole budget on one hang.
+yugabyte_bin_admin_timeout: 15
 # Seconds to wait for a YugabyteDB binary to start serving on its port.
 # A tablet server has to reach the masters and be assigned tablets before it accepts SQL, which on a cold cluster takes appreciably longer than a process start.
 yugabyte_bin_wait_timeout: 300
