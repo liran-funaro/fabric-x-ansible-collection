@@ -12,6 +12,36 @@
 # the only arrangement that works when the database hosts have no route to the internet,
 # which is the normal case for an isolated cluster network.
 
+- name: Ensure the locale YugabyteDB's initdb requires is installed
+  # A tablet server runs initdb at first start, and initdb refuses to proceed without the
+  # locale YugabyteDB asks it for:
+  #
+  #   In YugabyteDB, setting LC_COLLATE to C and all other locale settings to en_US.UTF-8
+  #   initdb: error: invalid locale name "en_US.UTF-8"
+  #
+  # The name is fixed inside YugabyteDB, so the host has to provide that exact locale. The
+  # container image ships it, which is why only binary mode needs this: a minimal RHEL image
+  # carries C.utf8 alone and the tablet server dies seconds after it starts.
+  ansible.builtin.package:
+    name: "{{ yugabyte_locale_packages }}"
+    state: present
+  become: true
+
+- name: Confirm the locale is now available
+  # Installing a package is not the same as having the locale, and the failure it prevents is
+  # a fatal crash inside a detached tmux session with the explanation suppressed by
+  # yugabyte_logs_level. Fail here, where the message is visible and actionable, instead.
+  ansible.builtin.command: locale -a
+  register: yugabyte_available_locales
+  changed_when: false
+  failed_when: >-
+    yugabyte_available_locales.stdout_lines
+    | map('lower')
+    | map('replace', '-', '')
+    | select('search', '^en_us.utf8$')
+    | list
+    | length == 0
+
 - name: Ensure the control node release directory exists
   ansible.builtin.file:
     path: "{{ yugabyte_control_release_dir }}"

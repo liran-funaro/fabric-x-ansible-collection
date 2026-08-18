@@ -1181,6 +1181,9 @@ Downloads the release archive once onto the control node and unpacks it onto the
     yugabyte_release_base_version: "{{ yugabyte_release_version | regex_replace('-b[0-9]+$', '') }}"
     # Names the YugabyteDB release archive to download.
     yugabyte_release_archive: "yugabyte-{{ yugabyte_release_version }}-linux-x86_64.tar.gz"
+    # Lists the packages that provide the `en_US.UTF-8` locale in binary mode. YugabyteDB asks initdb for that locale by name, so a host without it cannot start a tablet server at all. Container mode is unaffected because the image ships it. The default covers the RedHat family, where the locale arrives ready to use. On Debian and Ubuntu, installing `locales` is not by itself enough; the locale also has to be generated, so add that step or preseed the image.
+    yugabyte_locale_packages:
+      - "{{ 'glibc-langpack-en' if ansible_facts['os_family'] == 'RedHat' else 'locales' }}"
     # Sets the URL the release archive is downloaded from.
     yugabyte_release_url: "https://software.yugabyte.com/releases/{{ yugabyte_release_base_version }}/{{ yugabyte_release_archive }}"
     # Sets the control node directory holding the downloaded release archive.
