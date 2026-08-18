@@ -1309,6 +1309,8 @@ Creates the tablet data directories, assembles the `yb-tserver` command line, st
     yugabyte_bin_wait_timeout: 300
     # Seconds any single yb-admin readiness call may take before it is abandoned. yb-admin blocks inside its client setup when the masters are not answering, so it has to be bounded for the surrounding retry loop to make progress rather than spending its whole budget on one hang.
     yugabyte_bin_admin_timeout: 15
+    # Whether a tablet server advertises its OS hostname, rather than its address, as its own location. This is what `yb_servers(`) reports, and `yb_servers(`) is how a YugabyteDB smart driver client with `load_balance=true` discovers the nodes to spread its connections over. On bare machines the OS hostname usually resolves nowhere outside the machine itself, and the generated node certificates carry only IP SANs, so an advertised hostname is unusable twice over: the client cannot resolve it, and could not verify it under `sslmode=verify-full` if it could. A client that cannot use any discovered node silently keeps every connection on its first endpoint, which caps the whole cluster's throughput at one node and exhausts that node's connection slots. Container and Kubernetes deployments advertise the hostname unconditionally, because there the hostname is the resolvable service name.
+    yugabyte_bin_use_node_hostname: false
     # Lists the master RPC endpoints used to bootstrap YugabyteDB tablets and health checks.
     yugabyte_master_endpoints: "yb-master-1.example.com:7100,yb-master-2.example.com:7100,yb-master-3.example.com:7100"
     # Provides the ordered list of tablet hosts used to initialize the first tablet.
