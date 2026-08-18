@@ -67,7 +67,7 @@ Starts Node Exporter using the backend selected for the host. In container mode,
     # Installs Node Exporter as a host binary under systemd instead of as a container. Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across `make stop` and `make teardown`. A gap in host metrics between runs is what makes two runs hard to compare. Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
     node_exporter_use_bin: false
     # Enables the container backend.
-    node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
+    node_exporter_use_container: "{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
     node_exporter_use_k8s: false
     # Selects the OpenShift deployment branch.
@@ -89,7 +89,7 @@ Stops the container-backed Node Exporter workload for the host. Kubernetes deplo
     # Installs Node Exporter as a host binary under systemd instead of as a container. Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across `make stop` and `make teardown`. A gap in host metrics between runs is what makes two runs hard to compare. Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
     node_exporter_use_bin: false
     # Enables the container backend.
-    node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
+    node_exporter_use_container: "{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
     node_exporter_use_k8s: false
     # Selects the OpenShift deployment branch.
@@ -109,7 +109,7 @@ Removes Node Exporter runtime resources for the enabled backend. Container mode 
 - name: Remove Node Exporter runtime resources
   vars:
     # Enables the container backend.
-    node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
+    node_exporter_use_container: "{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
     node_exporter_use_k8s: false
     # Selects the OpenShift deployment branch.
@@ -142,7 +142,7 @@ Collects logs from the active Node Exporter backend for this host. Container mod
 - name: Collect Node Exporter logs
   vars:
     # Enables the container backend.
-    node_exporter_use_container: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
+    node_exporter_use_container: "{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
     # Enables the Kubernetes backend or cleanup path when true.
     node_exporter_use_k8s: false
     # Selects the OpenShift deployment branch.

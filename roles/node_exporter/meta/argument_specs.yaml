@@ -257,7 +257,7 @@ argument_specs:
           - Enables the Kubernetes backend or cleanup path when true.
       node_exporter_use_container: &node_exporter_use_container
         type: bool
-        default: "{{ (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
+        default: "{{ (not node_exporter_use_bin) and (not node_exporter_use_k8s) and (not node_exporter_use_openshift) }}"
         description:
           - Enables the container backend.
       node_exporter_k8s_resource_name: &node_exporter_k8s_resource_name
@@ -353,6 +353,7 @@ argument_specs:
       - Container mode removes the local runtime container.
       - Kubernetes mode removes the Service, optional NodePort Service, and DaemonSet.
     options:
+      node_exporter_use_bin: *node_exporter_use_bin
       node_exporter_use_container: *node_exporter_use_container
       node_exporter_use_k8s: *node_exporter_use_k8s
       node_exporter_use_openshift: *node_exporter_use_openshift
@@ -371,6 +372,7 @@ argument_specs:
       - Container mode reads the container log stream.
       - Kubernetes mode reads the matching pod logs from the DaemonSet.
     options:
+      node_exporter_use_bin: *node_exporter_use_bin
       node_exporter_use_container: *node_exporter_use_container
       node_exporter_use_k8s: *node_exporter_use_k8s
       node_exporter_use_openshift: *node_exporter_use_openshift
