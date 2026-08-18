@@ -194,6 +194,10 @@ Creates the Node Exporter configuration directory and renders the web configurat
 ```yaml
 - name: Transfer Node Exporter configuration
   vars:
+    # Installs Node Exporter as a host binary under systemd instead of as a container. Node Exporter measures the machine rather than any one experiment, so binary mode enables the service and leaves it running across `make stop` and `make teardown`. A gap in host metrics between runs is what makes two runs hard to compare. Also the only mode available on machines that cannot pull an image. The release archive is downloaded once on the control node and copied from there.
+    node_exporter_use_bin: false
+    # Config directory as the running exporter sees it, used inside rendered files. A container reads its config through a bind mount and a host binary reads it directly, so a rendered path that assumed the mount sent the binary looking for its certificate under the container's directory and the service died on startup.
+    node_exporter_config_dir: "{{ node_exporter_remote_config_dir if node_exporter_use_bin else node_exporter_container_config_dir }}"
     # Sets the base remote deployment directory used by `node_exporter_remote_config_dir`.
     remote_deploy_dir: "/opt/fabricx/node-exporter"
     # Sets the remote Node Exporter configuration directory.
