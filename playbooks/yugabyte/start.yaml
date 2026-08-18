@@ -4,10 +4,18 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-- name: Start YugabyteDB clusters
+# Masters and tablet servers are started by two plays rather than one, because a tablet server
+# initializes its YSQL catalog through the masters as soon as it starts and cannot do that
+# before a master quorum exists. A single play does not order them: Ansible groups the hosts by
+# the include each one resolves to and runs those groups in sequence, so a tablet server can be
+# started before the last master, and in binary mode it then dies instead of retrying.
+#
+# A play boundary is the only barrier that guarantees every master is running first.
+
+- name: Start YugabyteDB masters
   hosts: "{{ target_hosts | default('all') }}"
   tasks:
-    - name: Start YugabyteDB node
+    - name: Start YugabyteDB master node
       vars:
         yugabyte_cluster: >-
           {{
@@ -24,3 +32,26 @@
         tasks_from: start
       when:
         - yugabyte_component_type is defined
+        - yugabyte_component_type == 'master'
+
+- name: Start YugabyteDB tablet servers
+  hosts: "{{ target_hosts | default('all') }}"
+  tasks:
+    - name: Start YugabyteDB tablet node
+      vars:
+        yugabyte_cluster: >-
+          {{
+            groups['all']
+            | map('extract', hostvars)
+            | selectattr('yugabyte_component_type', 'defined')
+            | selectattr('yugabyte_cluster_id', 'defined')
+            | selectattr('yugabyte_cluster_id', '==', yugabyte_cluster_id)
+            | map(attribute='inventory_hostname')
+            | list
+          }}
+      ansible.builtin.include_role:
+        name: hyperledger.fabricx.yugabyte
+        tasks_from: start
+      when:
+        - yugabyte_component_type is defined
+        - yugabyte_component_type == 'tablet'
