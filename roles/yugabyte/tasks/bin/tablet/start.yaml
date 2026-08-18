@@ -18,6 +18,32 @@
     mode: "0o755"
   loop: "{{ yugabyte_tablet_data_dirs }}"
 
+- name: Wait for the master quorum to answer
+  # A tablet server initializes its YSQL catalog through the masters the moment it starts and
+  # dies outright if they are not serving yet:
+  #
+  #   Subprocess '.../postgres/bin/initdb' terminated with non-zero exit status 256
+  #
+  # The database hosts are one play over one group, so Ansible starts masters and tablet
+  # servers in the same pass and a tablet server can easily win the race. Container mode
+  # survives that because the container runtime restarts the container until it sticks; a tmux
+  # process that exits stays exited, so binary mode has to wait for the masters itself.
+  #
+  # yb-admin is the same readiness signal container mode uses for its master healthcheck: it
+  # returns successfully only once the masters are serving RPCs and have elected a leader.
+  ansible.builtin.command: >-
+    {{ yugabyte_home_dir }}/bin/yb-admin
+    --master_addresses {{ yugabyte_master_endpoints }}
+    {% if yugabyte_client_to_server_use_tls %}
+    --certs_dir_name {{ yugabyte_remote_config_dir }}/tls
+    {% endif %}
+    list_all_masters
+  register: yugabyte_master_quorum
+  until: yugabyte_master_quorum.rc == 0
+  retries: "{{ (yugabyte_bin_wait_timeout | int / 5) | round | int }}"
+  delay: 5
+  changed_when: false
+
 - name: Start the YugabyteDB Tablet Server binary
   vars:
     bin_name: "{{ yugabyte_bin_name }}"
