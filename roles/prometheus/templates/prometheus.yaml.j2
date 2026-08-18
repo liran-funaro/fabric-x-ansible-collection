@@ -92,12 +92,12 @@ scrape_configs:
 {% endif %}
 {% if targets.label is defined %}
         labels:
-{% if targets.label.group is defined %}
-          group: {{ targets.label.group }}
-{% endif %}
-{% if targets.label.export_type is defined %}
-          export_type: {{ targets.label.export_type }}
-{% endif %}
+{# Any label a scraper cares to attach, rather than a fixed pair. Setting "instance" here is #}
+{# the supported way to override the default, which is the raw address, so a panel can read #}
+{# "commit1" instead of "10.241.64.10:9111". #}
+{% for label_name, label_value in targets.label.items() %}
+          {{ label_name }}: {{ label_value }}
+{% endfor %}
 {% endif %}
 {% endfor %}
 {% endif %}

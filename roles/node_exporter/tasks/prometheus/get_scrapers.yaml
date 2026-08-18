@@ -15,6 +15,8 @@
         | map(attribute='inventory_hostname')
         | list
       }}
+    # Binary and container hosts are scraped identically: a static address and port. They are
+    # collected together here so that neither mode needs its own job template.
     node_exporter_container_hosts: >-
       {{
         node_exporter_hosts
@@ -74,6 +76,10 @@
       targets:
         - hosts: "{{ [current_node_exporter] }}"
           port_to_scrape: node_exporter_port
+          # Without this, "instance" is the address Prometheus scraped, so every dashboard
+          # identifies machines by IP and port. Name them instead.
+          label:
+            instance: "{{ current_node_exporter }}"
   ansible.builtin.set_fact:
     node_exporter_prometheus_scrape_services: "{{ (node_exporter_prometheus_scrape_services | default([])) + [node_exporter_scrape_service] }}"
   loop: "{{ node_exporter_container_hosts }}"

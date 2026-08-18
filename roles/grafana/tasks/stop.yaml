@@ -4,8 +4,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Grafana is the window onto the machines, so leaving it up means the view survives a
+# deployment being stopped, torn down and rebuilt for the next experiment.
+#
+# Set grafana_stop_with_deployment to false to keep it running across the lifecycle commands.
+
 - name: Stop Grafana container
   ansible.builtin.include_role:
     name: hyperledger.fabricx.grafana
     tasks_from: container/stop
-  when: grafana_use_container
+  when:
+    - grafana_use_container
+    - grafana_stop_with_deployment

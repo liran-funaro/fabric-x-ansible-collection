@@ -9,6 +9,11 @@ argument_specs:
   role-options:
     short_description: Shared option catalog for node_exporter role entry points
     options:
+      control_node_dir: &control_node_dir
+        type: path
+        description:
+          - Sets the control node working directory that holds downloaded release archives.
+          - "Example: C(/data1/fabric-x/control-node)."
       remote_deploy_dir: &remote_deploy_dir
         type: path
         description:
@@ -149,6 +154,94 @@ argument_specs:
         default: server.crt
         description:
           - Sets the Node Exporter TLS certificate filename.
+      node_exporter_use_bin: &node_exporter_use_bin
+        type: bool
+        default: false
+        description:
+          - Installs Node Exporter as a host binary under systemd instead of as a container.
+          - Node Exporter measures the machine rather than any one experiment, so binary mode
+            enables the service and leaves it running across C(make stop) and C(make teardown).
+            A gap in host metrics between runs is what makes two runs hard to compare.
+          - Also the only mode available on machines that cannot pull an image. The release
+            archive is downloaded once on the control node and copied from there.
+      node_exporter_stop_with_deployment: &node_exporter_stop_with_deployment
+        type: bool
+        default: false
+        description:
+          - Stops and disables the Node Exporter service when the deployment is stopped.
+          - Off by default, so host metrics continue across experiments. Turn it on when
+            releasing a machine entirely.
+      node_exporter_service_name: &node_exporter_service_name
+        type: str
+        default: "node-exporter"
+        description:
+          - Names the systemd service used in binary mode.
+      node_exporter_system_user: &node_exporter_system_user
+        type: str
+        default: "root"
+        description:
+          - Runs the Node Exporter service as this user.
+          - The default reads every mount point and process without special casing. A
+            dedicated unprivileged user works too, at the cost of some collectors.
+      node_exporter_release_version: &node_exporter_release_version
+        type: str
+        default: "{{ node_exporter_image_tag | regex_replace('^v', '') }}"
+        description:
+          - Selects the Node Exporter release used in binary mode.
+          - Derived from O(node_exporter_image_tag) without its leading C(v), so binary and
+            container mode track the same version by default.
+      node_exporter_release_name: &node_exporter_release_name
+        type: str
+        default: "node_exporter-{{ node_exporter_release_version }}.linux-{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+        description:
+          - Names the directory inside the release archive, which is also the archive stem.
+      node_exporter_release_archive: &node_exporter_release_archive
+        type: str
+        default: "{{ node_exporter_release_name }}.tar.gz"
+        description:
+          - Names the Node Exporter release archive.
+      node_exporter_release_url: &node_exporter_release_url
+        type: str
+        default: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_release_version }}/{{ node_exporter_release_archive }}"
+        description:
+          - Sets the URL the release archive is downloaded from, on the control node.
+      node_exporter_control_release_dir: &node_exporter_control_release_dir
+        type: path
+        default: "{{ control_node_dir }}/node-exporter"
+        description:
+          - Sets the control node directory holding the downloaded release archive.
+      node_exporter_control_release_archive: &node_exporter_control_release_archive
+        type: path
+        default: "{{ node_exporter_control_release_dir }}/{{ node_exporter_release_archive }}"
+        description:
+          - Sets the control node path of the downloaded release archive.
+      node_exporter_install_dir: &node_exporter_install_dir
+        type: path
+        default: "/usr/local/bin"
+        description:
+          - Sets the directory the Node Exporter binary is installed into.
+      node_exporter_bin_path: &node_exporter_bin_path
+        type: path
+        default: "{{ node_exporter_install_dir }}/node_exporter"
+        description:
+          - Sets the installed Node Exporter binary path used by the systemd unit.
+      node_exporter_bind_address: &node_exporter_bind_address
+        type: str
+        default: ""
+        description:
+          - Address the exporter listens on. Empty means every interface.
+      node_exporter_textfile_dir: &node_exporter_textfile_dir
+        type: path
+        default: "/var/lib/node_exporter/textfile_collector"
+        description:
+          - Directory the textfile collector reads, for metrics written by other tooling.
+      node_exporter_extra_flags: &node_exporter_extra_flags
+        type: list
+        elements: str
+        default: []
+        description:
+          - Appends extra command line flags to the Node Exporter service.
+          - "Example: C(['--collector.processes'])."
       node_exporter_use_k8s: &node_exporter_use_k8s
         type: bool
         default: false
@@ -229,6 +322,7 @@ argument_specs:
       - In container mode, launches the local C(node_exporter_container_name) container and publishes C(node_exporter_port).
       - In Kubernetes mode, creates the Service and DaemonSet in C(k8s_namespace) and waits for rollout completion.
     options:
+      node_exporter_use_bin: *node_exporter_use_bin
       node_exporter_use_container: *node_exporter_use_container
       node_exporter_use_k8s: *node_exporter_use_k8s
       node_exporter_use_openshift: *node_exporter_use_openshift
@@ -239,6 +333,7 @@ argument_specs:
       - Stops the container-backed Node Exporter workload for the host.
       - Kubernetes deployments use C(teardown) instead of this entry point.
     options:
+      node_exporter_use_bin: *node_exporter_use_bin
       node_exporter_use_container: *node_exporter_use_container
       node_exporter_use_k8s: *node_exporter_use_k8s
       node_exporter_use_openshift: *node_exporter_use_openshift
@@ -370,6 +465,49 @@ argument_specs:
       organization: *organization
       node_exporter_openshift_route: *node_exporter_openshift_route
 
+  bin/install:
+    short_description: Install the Node Exporter release on a machine
+    description:
+      - Downloads the Node Exporter release archive once onto the control node and unpacks the
+        binary from there onto the machine, so machines with no route to the internet are
+        served too.
+    options:
+      node_exporter_image_tag: *node_exporter_image_tag
+      node_exporter_release_version: *node_exporter_release_version
+      node_exporter_release_name: *node_exporter_release_name
+      node_exporter_release_archive: *node_exporter_release_archive
+      node_exporter_release_url: *node_exporter_release_url
+      control_node_dir: *control_node_dir
+      node_exporter_control_release_dir: *node_exporter_control_release_dir
+      node_exporter_control_release_archive: *node_exporter_control_release_archive
+      node_exporter_install_dir: *node_exporter_install_dir
+      node_exporter_bin_path: *node_exporter_bin_path
+  bin/start:
+    short_description: Run Node Exporter as a systemd service
+    description:
+      - Installs the unit, enables it and starts it, then waits for the metrics port.
+      - Enabled deliberately, so host metrics survive a reboot and span experiments.
+    options:
+      node_exporter_service_name: *node_exporter_service_name
+      node_exporter_system_user: *node_exporter_system_user
+      node_exporter_bin_path: *node_exporter_bin_path
+      node_exporter_install_dir: *node_exporter_install_dir
+      node_exporter_bind_address: *node_exporter_bind_address
+      node_exporter_port: *node_exporter_port
+      node_exporter_use_tls: *node_exporter_use_tls
+      remote_deploy_dir: *remote_deploy_dir
+      node_exporter_remote_config_dir: *node_exporter_remote_config_dir
+      node_exporter_web_config_file: *node_exporter_web_config_file
+      node_exporter_textfile_dir: *node_exporter_textfile_dir
+      node_exporter_extra_flags: *node_exporter_extra_flags
+  bin/stop:
+    short_description: Stop the Node Exporter service
+    description:
+      - Does nothing unless O(node_exporter_stop_with_deployment) is set, so that stopping a
+        deployment does not create a hole in the machine's metrics.
+    options:
+      node_exporter_service_name: *node_exporter_service_name
+      node_exporter_stop_with_deployment: *node_exporter_stop_with_deployment
   container/start:
     short_description: Start Node Exporter in a container
     description:

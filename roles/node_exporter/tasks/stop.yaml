@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+- name: Stop the Node Exporter service
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.node_exporter
+    tasks_from: bin/stop
+  when: node_exporter_use_bin
+
 - name: Stop Node Exporter container
   ansible.builtin.include_role:
     name: hyperledger.fabricx.node_exporter

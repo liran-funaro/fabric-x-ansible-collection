@@ -1,0 +1,36 @@
+# {{ ansible_managed }}
+#
+# Node Exporter runs as a system service rather than under tmux like the Fabric-X components,
+# because it is infrastructure rather than part of an experiment: it has to keep reporting
+# across "make stop", "make teardown" and a reboot, so that a machine's CPU, disk and memory
+# history spans the experiments being compared.
+[Unit]
+Description=Prometheus Node Exporter
+Documentation=https://github.com/prometheus/node_exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ node_exporter_system_user }}
+Group={{ node_exporter_system_user }}
+ExecStart={{ node_exporter_bin_path }} \
+    --web.listen-address={{ node_exporter_bind_address }}:{{ node_exporter_port }} \
+{% if node_exporter_use_tls %}
+    --web.config.file={{ node_exporter_remote_config_dir }}/{{ node_exporter_web_config_file }} \
+{% endif %}
+{% for collector_flag in node_exporter_extra_flags %}
+    {{ collector_flag }} \
+{% endfor %}
+    --collector.textfile.directory={{ node_exporter_textfile_dir }}
+Restart=always
+RestartSec=5
+# Reading every process's stats needs no privilege beyond the default, but the exporter is
+# long lived and untrusted input never reaches it, so keep the sandbox tight.
+NoNewPrivileges=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths={{ node_exporter_textfile_dir }}
+
+[Install]
+WantedBy=multi-user.target

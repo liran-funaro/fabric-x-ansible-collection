@@ -27,6 +27,20 @@
   "id": 1,
   "links": [
     {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "fabric-x"
+      ],
+      "targetBlank": false,
+      "title": "Dashboards",
+      "tooltip": "Switch to another Fabric-X dashboard",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
       "icon": "info",
       "tags": [],
       "targetBlank": true,
@@ -7234,7 +7248,8 @@
   "refresh": "auto",
   "schemaVersion": 42,
   "tags": [
-    "prometheus"
+    "prometheus",
+    "fabric-x"
   ],
   "templating": {
     "list": [
