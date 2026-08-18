@@ -2737,7 +2737,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 25,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -2756,11 +2756,12 @@
             "spanNulls": true,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -2811,7 +2812,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "coordinator_verifier_input_batch_queue_size",
+          "expr": "avg_over_time(coordinator_verifier_input_batch_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -2829,7 +2830,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "coordinator_sigverifier_output_validated_tx_batch_queue_size",
+          "expr": "avg_over_time(coordinator_sigverifier_output_validated_tx_batch_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -2847,7 +2848,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "coordinator_vcservice_output_tx_status_batch_queue_size",
+          "expr": "avg_over_time(coordinator_vcservice_output_tx_status_batch_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -2865,7 +2866,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "coordinator_vcservice_output_validated_tx_batch_queue_size",
+          "expr": "avg_over_time(coordinator_vcservice_output_validated_tx_batch_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -2877,7 +2878,8 @@
         }
       ],
       "title": "Verifier & VCService Queue Sizes",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Batches queued inside the coordinator, each series a one-minute mean, stacked into the coordinator's total backlog."
     },
     {
       "datasource": {
@@ -4014,7 +4016,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -4065,7 +4068,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "verifier_server_parallel_executor_active_requests",
+          "expr": "avg_over_time(verifier_server_parallel_executor_active_requests[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -4078,7 +4081,7 @@
       ],
       "title": "Active Streams & Requests",
       "type": "timeseries",
-      "description": "Requests in flight inside each verifier's parallel executor, stacked. It is the verifier fleet's own backlog: flat and low means the verifiers are not the constraint."
+      "description": "Requests in flight inside each verifier's parallel executor, as a one-minute mean, stacked into the fleet total."
     },
     {
       "collapsed": false,
@@ -4675,7 +4678,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -4726,7 +4730,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "vcservice_preparer_input_queue_size",
+          "expr": "avg_over_time(vcservice_preparer_input_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -4738,7 +4742,8 @@
         }
       ],
       "title": "Preparer Input Queue Size",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Batches waiting to be prepared, as a one-minute mean per server, stacked."
     },
     {
       "datasource": {
@@ -4782,7 +4787,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -4833,7 +4839,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "vcservice_validator_input_queue_size",
+          "expr": "avg_over_time(vcservice_validator_input_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -4845,7 +4851,8 @@
         }
       ],
       "title": "Validator Input Queue Size",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Batches waiting to be validated, as a one-minute mean per server, stacked."
     },
     {
       "datasource": {
@@ -4889,7 +4896,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -4940,7 +4948,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "vcservice_committer_input_queue_size",
+          "expr": "avg_over_time(vcservice_committer_input_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -4952,7 +4960,8 @@
         }
       ],
       "title": "Committer Input Queue Size",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Batches waiting to be committed, as a one-minute mean per server, stacked."
     },
     {
       "datasource": {
@@ -4996,7 +5005,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMin": 0
           },
           "mappings": [],
           "thresholds": {
@@ -5047,7 +5057,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": true,
-          "expr": "vcservice_txstatus_output_queue_size",
+          "expr": "avg_over_time(vcservice_txstatus_output_queue_size[1m])",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -5059,7 +5069,8 @@
         }
       ],
       "title": "TxStatus Output Queue Size",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Status batches waiting to be returned, as a one-minute mean per server, stacked."
     },
     {
       "datasource": {
