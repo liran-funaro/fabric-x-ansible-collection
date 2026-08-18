@@ -80,6 +80,8 @@ Stops the Grafana container without removing the generated provisioning or TLS a
 ```yaml
 - name: Stop Grafana in container mode
   vars:
+    # Stops Grafana when the deployment is stopped or torn down. Set to false to treat it as standing infrastructure instead, so that it keeps running between experiments.
+    grafana_stop_with_deployment: true
     # Enables container mode.
     grafana_use_container: "{{ (not grafana_use_k8s) and (not grafana_use_openshift) }}"
     # Enables Kubernetes mode.
