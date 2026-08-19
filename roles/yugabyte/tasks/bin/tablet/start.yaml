@@ -53,14 +53,23 @@
     bin_name: "{{ yugabyte_bin_name }}"
     bin_remote_dir: "{{ yugabyte_home_dir }}/bin"
     bin_chdir: "{{ yugabyte_home_dir }}"
+    # The RPC and YSQL addresses are the node's own, not 0.0.0.0. A tablet server that does
+    # not advertise its hostname takes its identity from these, and "0.0.0.0" is not an
+    # identity any certificate can attest, so every TLS handshake to it fails with
+    #
+    #   Handshake failed: Endpoint does not match, address: 0.0.0.0, hostname: 0.0.0.0
+    #
+    # including the one the local YSQL backend makes, which takes the whole node down with it.
+    # Binding the real address costs nothing here: it is the address the peers, the clients and
+    # the node certificate all already use.
     bin_command: >-
       yb-tserver
       --tserver_master_addrs={{ yugabyte_master_endpoints }}
       --server_broadcast_addresses={{ ansible_host }}:{{ yugabyte_tablet_rpc_bind_port }}
-      --rpc_bind_addresses=0.0.0.0:{{ yugabyte_tablet_rpc_bind_port }}
+      --rpc_bind_addresses={{ ansible_host }}:{{ yugabyte_tablet_rpc_bind_port }}
       --webserver_interface=0.0.0.0
       --webserver_port={{ yugabyte_tablet_webserver_port }}
-      --pgsql_proxy_bind_address=0.0.0.0:{{ yugabyte_tablet_pgsql_bind_port }}
+      --pgsql_proxy_bind_address={{ ansible_host }}:{{ yugabyte_tablet_pgsql_bind_port }}
       --pgsql_proxy_webserver_port={{ yugabyte_tablet_pgsql_web_port }}
       --cql_proxy_bind_address=0.0.0.0:{{ yugabyte_tablet_cql_bind_port }}
       --cql_proxy_webserver_port={{ yugabyte_tablet_cql_web_port }}
