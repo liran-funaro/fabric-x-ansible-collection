@@ -13,6 +13,16 @@
 - name: Kill tmux session
   ansible.builtin.command: tmux kill-session -t {{ tmux_session_name }}
   register: tmux_kill_session
-  changed_when: tmux_kill_session.rc != 0
+  changed_when: tmux_kill_session.rc == 0
+  # The session can be gone by the time this runs even though the check above found it: the
+  # tmux server exits along with its last session, and a teardown routinely races a process
+  # that is already shutting down. The task's goal is that the session is not running, so a
+  # session that has already gone satisfies it. Failing instead aborts the whole teardown,
+  # and with it any "teardown && setup && start" chain, over work that was already done.
+  failed_when:
+    - tmux_kill_session.rc != 0
+    - "'no server running' not in tmux_kill_session.stderr"
+    - "'session not found' not in tmux_kill_session.stderr"
+    - "\"can't find session\" not in tmux_kill_session.stderr"
   when:
     - tmux_session_exists.rc == 0
