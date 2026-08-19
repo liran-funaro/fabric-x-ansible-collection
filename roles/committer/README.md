@@ -1116,6 +1116,11 @@ Render validator configuration, DB settings, mTLS assets, and optional Kubernete
     committer_container_config_dir: /config
     # Maximum size of the committer database connection pool.
     committer_database_max_connections: 32
+    # Inventory hostnames of the database nodes this component should use, instead of every node in the cluster. Use it to pin a component to one node when the client cannot spread its own connections. A YugabyteDB smart driver client with load balancing on discovers the other nodes and then fails to reach any of them under `sslmode=verify-full`, because it does not update the expected certificate name when it switches node; it falls back to the first endpoint in this list, silently, so every component ends up on the same node. Naming one node per component spreads them deterministically instead.
+    committer_database_endpoint_hosts:
+      - "yugabytedb-tablet-4"
+    # Whether the database client distributes its own connections over the cluster's nodes. Turn it off when the endpoint list has been narrowed to one node per component, so the client does not spend a connection attempt per node discovering that it cannot use any of them.
+    committer_database_load_balance: true
     # Number of tablets to pre-split each table into, overriding the default of one per tablet server. One tablet per server spreads a table evenly but gives the server no way to work on that table in parallel, since a tablet is the unit both of placement and of concurrency. A small multiple of the server count lets each server commit to several tablets of the same table at once, at the cost of more Raft groups to maintain.
     committer_database_table_pre_split_tablets: 120
     # Minimum size of the committer database connection pool.
@@ -1556,6 +1561,11 @@ Render query-service configuration, DB settings, mTLS assets, and optional Kuber
     committer_container_config_dir: /config
     # Maximum size of the committer database connection pool.
     committer_database_max_connections: 32
+    # Inventory hostnames of the database nodes this component should use, instead of every node in the cluster. Use it to pin a component to one node when the client cannot spread its own connections. A YugabyteDB smart driver client with load balancing on discovers the other nodes and then fails to reach any of them under `sslmode=verify-full`, because it does not update the expected certificate name when it switches node; it falls back to the first endpoint in this list, silently, so every component ends up on the same node. Naming one node per component spreads them deterministically instead.
+    committer_database_endpoint_hosts:
+      - "yugabytedb-tablet-4"
+    # Whether the database client distributes its own connections over the cluster's nodes. Turn it off when the endpoint list has been narrowed to one node per component, so the client does not spend a connection attempt per node discovering that it cannot use any of them.
+    committer_database_load_balance: true
     # Number of tablets to pre-split each table into, overriding the default of one per tablet server. One tablet per server spreads a table evenly but gives the server no way to work on that table in parallel, since a tablet is the unit both of placement and of concurrency. A small multiple of the server count lets each server commit to several tablets of the same table at once, at the cost of more Raft groups to maintain.
     committer_database_table_pre_split_tablets: 120
     # Minimum size of the committer database connection pool.

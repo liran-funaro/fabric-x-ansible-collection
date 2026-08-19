@@ -89,5 +89,8 @@ committer_log_format: "%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %
 # The ordering service is a mock orderer embedded in the load generator process rather than a real deployment.
 # The sidecar then pulls blocks from the load generator at the endpoint recorded in the generated config block, over a plaintext connection, and no orderer hosts are expected in the inventory.
 committer_sidecar_use_mock_orderer: '{{ use_mock_orderer | default(false) }}'
+# Whether the database client distributes its own connections over the cluster's nodes.
+# Turn it off when the endpoint list has been narrowed to one node per component, so the client does not spend a connection attempt per node discovering that it cannot use any of them.
+committer_database_load_balance: true
 # Selects the OpenShift deployment branch.
 committer_use_openshift: false

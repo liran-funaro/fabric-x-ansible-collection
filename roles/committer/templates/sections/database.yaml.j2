@@ -30,7 +30,10 @@ database:
 {% endif %}
 {% elif yugabyte_cluster_ref_id is defined %}
 {% set yugabyte_cluster = groups['all'] | map('extract', hostvars) | selectattr('yugabyte_cluster_id', 'defined') | selectattr('yugabyte_cluster_id', '==', yugabyte_cluster_ref_id) | map(attribute='inventory_hostname') %}
-{% for db in yugabyte_cluster %}
+{# Every tablet server in the cluster, unless the inventory names the ones this component #}
+{# should use. Restricting the list is how a component is pinned to a particular node, which #}
+{# matters when the client cannot spread its own connections: see load-balance below. #}
+{% for db in committer_database_endpoint_hosts | default(yugabyte_cluster | list) %}
 {% if hostvars[db].yugabyte_tablet_pgsql_bind_port is defined %}
     # Yugabyte Tablet
     - {{ hostvars[db].ansible_host }}:{{ hostvars[db].yugabyte_tablet_pgsql_bind_port }}
@@ -43,8 +46,10 @@ database:
   # Database name to connect to.
   database: {{ hostvars[yugabyte_cluster | first].yugabyte_db }}
   # Enable load balancing across multiple database endpoints. Should be enabled for
-  # YugabyteDB clusters to distribute operations across nodes. Set to false for single-node deployments.
-  load-balance: true
+  # YugabyteDB clusters to distribute operations across nodes. Set to false for single-node
+  # deployments, or where the driver's own balancing cannot be used and each component is
+  # pointed at one node instead through committer_database_endpoint_hosts.
+  load-balance: {{ committer_database_load_balance | default(true) | ternary('true', 'false') }}
   # Number of tablets to pre-split each table into at creation time (YugabyteDB only).
   # Pre-splitting distributes a table's data across multiple tablet servers from the start,
   # preventing the "hot tablet" bottleneck where a single tablet handles all initial writes
