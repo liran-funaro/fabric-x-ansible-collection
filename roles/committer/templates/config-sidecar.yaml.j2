@@ -113,6 +113,16 @@ ledger:
   # sync every block (safest but slowest). Higher values improve write performance
   # but risk losing more blocks on crash (recoverable from orderer).
   sync-interval: {{ committer_sidecar_ledger_sync_interval | default(100) }}
+  # Drop the block number index the block store uses to locate a block on disk. Only a
+  # sidecar that serves no block query can afford this: GetBlockByNumber fails, block delivery
+  # is confined to the block store's in-memory cache so a consumer that falls behind it cannot
+  # be served, and reopening a non-empty ledger panics inside the block store.
+  disable-block-num-index: {{ committer_sidecar_ledger_disable_block_num_index | default(false) | ternary('true', 'false') }}
+  # Drop the transaction ID index that GetBlockByTxID and GetTxByID need. It costs one index
+  # entry per transaction rather than per block, and its compaction is the largest single
+  # consumer of sidecar CPU under load, growing with the ledger. The index also selects the
+  # block store's on-disk format, so changing this needs an empty ledger directory.
+  disable-tx-id-index: {{ committer_sidecar_ledger_disable_tx_id_index | default(false) | ternary('true', 'false') }}
 
 # ---------------------------------------------------------------------------
 # Notification settings

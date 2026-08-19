@@ -639,6 +639,26 @@ argument_specs:
         description:
           - Sidecar ledger sync interval.
           - "Example: C(100)."
+      committer_sidecar_ledger_disable_block_num_index:
+        &committer_sidecar_ledger_disable_block_num_index
+        type: bool
+        default: false
+        description:
+          - Drops the sidecar block store's block number index.
+          - Only a sidecar that serves no block query can afford this. GetBlockByNumber fails,
+            block delivery is confined to the block store's in-memory cache so a consumer that
+            falls behind it cannot be served, and reopening a non-empty ledger panics.
+      committer_sidecar_ledger_disable_tx_id_index:
+        &committer_sidecar_ledger_disable_tx_id_index
+        type: bool
+        default: false
+        description:
+          - Drops the sidecar block store's transaction ID index, which GetBlockByTxID and
+            GetTxByID need.
+          - The index costs one entry per transaction rather than per block, and its compaction
+            is the largest single consumer of sidecar CPU under load, growing with the ledger.
+          - It also selects the block store's on-disk format, so changing this setting requires
+            an empty ledger directory.
       committer_sidecar_notification_max_timeout:
         &committer_sidecar_notification_max_timeout
         type: str
@@ -1429,6 +1449,8 @@ argument_specs:
       committer_server_rate_limit_requests_per_second: *committer_server_rate_limit_requests_per_second
       committer_sidecar_channel_buffer_size: *committer_sidecar_channel_buffer_size
       committer_sidecar_ledger_sync_interval: *committer_sidecar_ledger_sync_interval
+      committer_sidecar_ledger_disable_block_num_index: *committer_sidecar_ledger_disable_block_num_index
+      committer_sidecar_ledger_disable_tx_id_index: *committer_sidecar_ledger_disable_tx_id_index
       committer_sidecar_notification_max_timeout: *committer_sidecar_notification_max_timeout
       committer_sidecar_notification_max_active_tx_ids: *committer_sidecar_notification_max_active_tx_ids
       committer_sidecar_notification_max_tx_ids_per_request: *committer_sidecar_notification_max_tx_ids_per_request

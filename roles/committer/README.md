@@ -1505,6 +1505,10 @@ Render sidecar configuration, upstream TLS bundles, and optional Kubernetes Conf
     committer_sidecar_channel_buffer_size: 100
     # Sidecar ledger sync interval.
     committer_sidecar_ledger_sync_interval: 100
+    # Drops the sidecar block store's block number index. Only a sidecar that serves no block query can afford this. GetBlockByNumber fails, block delivery is confined to the block store's in-memory cache so a consumer that falls behind it cannot be served, and reopening a non-empty ledger panics.
+    committer_sidecar_ledger_disable_block_num_index: false
+    # Drops the sidecar block store's transaction ID index, which GetBlockByTxID and GetTxByID need. The index costs one entry per transaction rather than per block, and its compaction is the largest single consumer of sidecar CPU under load, growing with the ledger. It also selects the block store's on-disk format, so changing this setting requires an empty ledger directory.
+    committer_sidecar_ledger_disable_tx_id_index: false
     # Sidecar notification timeout.
     committer_sidecar_notification_max_timeout: "10m"
     # Maximum number of active transaction IDs tracked for notification subscriptions.
