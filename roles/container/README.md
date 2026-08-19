@@ -601,7 +601,7 @@ Removes the host path used as a Docker volume. Uses `container_volume_path` as t
 
 > Install Podman on the target host
 
-Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry. Enables systemd lingering so rootless containers outlive the login session.
+Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry. Enables systemd lingering so rootless containers outlive the login session. Starts the user Podman API socket that container-API consumers bind-mount.
 
 ```yaml
 - name: Install Podman on the target host
@@ -612,6 +612,8 @@ Installs the Podman runtime on supported hosts. Verifies that the Podman client 
     container_hello_world_image: "quay.io/podman/hello:latest"
     # Enables systemd lingering for the user that runs rootless Podman, so its containers survive the end of the login session that started them. Without it systemd removes `/run/user/<uid>` once the user logs out, which stops every container on the host and invalidates the lock state they were numbered against, so a later start fails and the Podman API socket is missing. Set this to false on a host where enabling lingering is not permitted. Containers there only run for as long as a session is open.
     container_enable_linger: true
+    # Serves the rootless Podman API socket, which the roles that read the container API bind-mount into their own container. Podman advertises the socket path whether or not the user socket unit is running, so without it those containers fail to start on a missing path rather than falling back to no container discovery. Set this to false on a host where no role needs the container API.
+    container_enable_api_socket: true
     # Marks whether the target host is macOS.
     container_on_mac: "{{ ansible_facts.os_family == 'Darwin' }}"
   ansible.builtin.include_role:

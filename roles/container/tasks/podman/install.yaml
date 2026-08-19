@@ -42,6 +42,27 @@
       changed_when: true
       when: (container_linger_state.stdout | default('') | trim) != 'yes'
 
+- name: Serve the rootless Podman API socket
+  # Podman reports a socket path in its system information whether or not anything is
+  # listening there, and the roles that read the container API bind-mount that path straight
+  # into their container. When the user socket unit is not running the path does not exist and
+  # the bind mount fails the container outright, with
+  #   Error: statfs /run/user/<uid>/podman/podman.sock: no such file or directory
+  # which is how a log-shipping agent fails a whole deployment while Podman itself works.
+  # Ordered after lingering deliberately: the socket lives in the runtime directory that
+  # lingering is what keeps alive.
+  when:
+    - container_enable_api_socket
+    - not container_on_mac
+    - ansible_facts.user_uid | int != 0
+  ansible.builtin.systemd_service:
+    name: podman.socket
+    scope: user
+    enabled: true
+    state: started
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.user_uid }}"
+
 - name: Test podman with an hello-world container
   # Pulls from a public registry, so it can only pass on a host with internet access. On an
   # isolated host it fails and takes the whole play with it, which is why it is optional:

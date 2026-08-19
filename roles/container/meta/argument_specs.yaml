@@ -59,6 +59,16 @@ argument_specs:
             against, so a later start fails and the Podman API socket is missing.
           - Set this to false on a host where enabling lingering is not permitted. Containers
             there only run for as long as a session is open.
+      container_enable_api_socket: &container_enable_api_socket
+        type: bool
+        default: true
+        description:
+          - Serves the rootless Podman API socket, which the roles that read the container
+            API bind-mount into their own container.
+          - Podman advertises the socket path whether or not the user socket unit is running,
+            so without it those containers fail to start on a missing path rather than
+            falling back to no container discovery.
+          - Set this to false on a host where no role needs the container API.
       container_socket: &container_socket
         type: str
         description:
@@ -638,10 +648,12 @@ argument_specs:
       - "Verifies that the Podman client is available for subsequent container lifecycle tasks."
       - "Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry."
       - "Enables systemd lingering so rootless containers outlive the login session."
+      - "Starts the user Podman API socket that container-API consumers bind-mount."
     options:
       container_verify_with_hello_world: *container_verify_with_hello_world
       container_hello_world_image: *container_hello_world_image
       container_enable_linger: *container_enable_linger
+      container_enable_api_socket: *container_enable_api_socket
       container_on_mac: *container_on_mac
 
   podman/get_socket:
