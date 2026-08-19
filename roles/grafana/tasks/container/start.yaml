@@ -32,15 +32,24 @@
       - "{{ grafana_web_port }}:{{ grafana_web_port }}"
     container_volumes:
       - "{{ grafana_remote_config_dir }}:{{ grafana_container_config_dir }}:z,ro"
+    # Probe the address Grafana is actually listening on. grafana_bind_address may narrow it
+    # to loopback, and then nothing answers on ansible_host, so a healthcheck aimed there
+    # reports unhealthy for a Grafana that is serving perfectly well. Under TLS the URL still
+    # has to name the host the certificate was issued for, so --resolve redirects the
+    # connection to the bind address while leaving verification of that name intact, rather
+    # than reaching for --insecure and giving up on checking TLS at all.
     container_healthcheck_test: >-
       curl -f
       --silent
       --show-error
       {% if grafana_use_tls %}
       --cacert {{ grafana_container_config_dir }}/tls/{{ grafana_tls_cert_file }}
+      {% if grafana_bind_address not in ['0.0.0.0', '::', ''] %}
+      --resolve {{ ansible_host }}:{{ grafana_web_port }}:{{ grafana_bind_address }}
+      {% endif %}
       https://{{ ansible_host }}:{{ grafana_web_port }}/api/health
       {% else %}
-      http://localhost:{{ grafana_web_port }}/api/health
+      http://{{ grafana_bind_address if grafana_bind_address not in ['0.0.0.0', '::', ''] else 'localhost' }}:{{ grafana_web_port }}/api/health
       {% endif %}
     container_wait_until_running: true
     container_run_as_host_user: true
