@@ -16,6 +16,32 @@
   register: container_podman_check
   changed_when: container_podman_check.rc != 0
 
+- name: Keep rootless Podman state alive between login sessions
+  # Rootless Podman keeps its lock files and its API socket under /run/user/<uid>, which systemd
+  # deletes as soon as the user's last login session ends. Without lingering, every container on
+  # the host is stopped the moment nobody is logged in, and the state left behind is not merely
+  # stopped but broken: a later start reports "acquiring lock N for container ...: file exists"
+  # because the locks the containers were numbered against are gone, and the API socket that the
+  # metrics agents bind is simply absent. Lingering keeps the runtime directory for the whole
+  # boot, which is what a host running detached services needs.
+  when:
+    - container_enable_linger
+    - not container_on_mac
+    - ansible_facts.user_uid | int != 0
+  block:
+    - name: Check whether the Podman user already lingers
+      ansible.builtin.command: loginctl show-user {{ ansible_user_id }} --property=Linger --value
+      register: container_linger_state
+      changed_when: false
+      # A user with neither a linger marker nor an active session has no record to show, which
+      # reports failure rather than "no". Either way the next task is what decides.
+      failed_when: false
+
+    - name: Enable lingering for the Podman user
+      ansible.builtin.command: loginctl enable-linger {{ ansible_user_id }}
+      changed_when: true
+      when: (container_linger_state.stdout | default('') | trim) != 'yes'
+
 - name: Test podman with an hello-world container
   vars:
     container_client: podman

@@ -10,6 +10,10 @@
 # Selects the container client to verify or use.
 # Leave it empty to auto-detect C(podman) first and then C(docker).
 container_client: "{{ lookup('env', 'CONTAINER_CLIENT') or '' }}"
+# Enables systemd lingering for the user that runs rootless Podman, so its containers survive the end of the login session that started them.
+# Without it systemd removes C(/run/user/<uid>) once the user logs out, which stops every container on the host and invalidates the lock state they were numbered against, so a later start fails and the Podman API socket is missing.
+# Set this to false on a host where enabling lingering is not permitted. Containers there only run for as long as a session is open.
+container_enable_linger: true
 # Sets the hostname inside the container.
 container_hostname: '{{ container_name | default(inventory_hostname) }}'
 # Provides the host uid used to build C(container_host_user).

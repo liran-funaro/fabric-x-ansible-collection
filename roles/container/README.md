@@ -601,10 +601,15 @@ Removes the host path used as a Docker volume. Uses `container_volume_path` as t
 
 > Install Podman on the target host
 
-Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks.
+Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Enables systemd lingering so rootless containers outlive the login session.
 
 ```yaml
 - name: Install Podman on the target host
+  vars:
+    # Enables systemd lingering for the user that runs rootless Podman, so its containers survive the end of the login session that started them. Without it systemd removes `/run/user/<uid>` once the user logs out, which stops every container on the host and invalidates the lock state they were numbered against, so a later start fails and the Podman API socket is missing. Set this to false on a host where enabling lingering is not permitted. Containers there only run for as long as a session is open.
+    container_enable_linger: true
+    # Marks whether the target host is macOS.
+    container_on_mac: "{{ ansible_facts.os_family == 'Darwin' }}"
   ansible.builtin.include_role:
     name: hyperledger.fabricx.container
     tasks_from: podman/install
