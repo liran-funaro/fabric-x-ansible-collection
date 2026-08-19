@@ -601,7 +601,7 @@ Removes the host path used as a Docker volume. Uses `container_volume_path` as t
 
 > Install Podman on the target host
 
-Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry.
+Installs the Podman runtime on supported hosts. Verifies that the Podman client is available for subsequent container lifecycle tasks. Optionally runs a hello-world container as an end-to-end check, which needs a reachable registry. Enables systemd lingering so rootless containers outlive the login session.
 
 ```yaml
 - name: Install Podman on the target host
@@ -610,6 +610,10 @@ Installs the Podman runtime on supported hosts. Verifies that the Podman client 
     container_verify_with_hello_world: true
     # Sets the image used to verify a fresh Podman installation. Point this at a locally reachable image to keep the check on a host that cannot reach a public registry.
     container_hello_world_image: "quay.io/podman/hello:latest"
+    # Enables systemd lingering for the user that runs rootless Podman, so its containers survive the end of the login session that started them. Without it systemd removes `/run/user/<uid>` once the user logs out, which stops every container on the host and invalidates the lock state they were numbered against, so a later start fails and the Podman API socket is missing. Set this to false on a host where enabling lingering is not permitted. Containers there only run for as long as a session is open.
+    container_enable_linger: true
+    # Marks whether the target host is macOS.
+    container_on_mac: "{{ ansible_facts.os_family == 'Darwin' }}"
   ansible.builtin.include_role:
     name: hyperledger.fabricx.container
     tasks_from: podman/install
