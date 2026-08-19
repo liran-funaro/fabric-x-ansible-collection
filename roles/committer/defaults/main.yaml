@@ -92,9 +92,6 @@ committer_sidecar_use_mock_orderer: '{{ use_mock_orderer | default(false) }}'
 # Whether the database client distributes its own connections over the cluster's nodes.
 # Turn it off when the endpoint list has been narrowed to one node per component, so the client does not spend a connection attempt per node discovering that it cannot use any of them.
 committer_database_load_balance: true
-# Drops the sidecar block store's block number index.
-# Only a sidecar that serves no block query can afford this. GetBlockByNumber fails, block delivery is confined to the block store's in-memory cache so a consumer that falls behind it cannot be served, and reopening a non-empty ledger panics.
-committer_sidecar_ledger_disable_block_num_index: false
 # Drops the sidecar block store's transaction ID index, which GetBlockByTxID and GetTxByID need.
 # The index costs one entry per transaction rather than per block, and its compaction is the largest single consumer of sidecar CPU under load, growing with the ledger.
 # It also selects the block store's on-disk format, so changing this setting requires an empty ledger directory.
