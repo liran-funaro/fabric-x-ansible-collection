@@ -458,6 +458,17 @@ argument_specs:
         description:
           - Maximum concurrent streaming RPCs allowed per client connection.
           - "Example: C(128)."
+      committer_database_table_pre_split_tablets: &committer_database_table_pre_split_tablets
+        type: int
+        description:
+          - Number of tablets to pre-split each table into, overriding the default of one per
+            tablet server.
+          - >-
+            One tablet per server spreads a table evenly but gives the server no way to work on
+            that table in parallel, since a tablet is the unit both of placement and of
+            concurrency. A small multiple of the server count lets each server commit to several
+            tablets of the same table at once, at the cost of more Raft groups to maintain.
+          - "Example: C(120)."
       committer_database_max_connections: &committer_database_max_connections
         type: int
         description:
@@ -1225,6 +1236,7 @@ argument_specs:
       committer_config_file: *committer_config_file
       committer_container_config_dir: *committer_container_config_dir
       committer_database_max_connections: *committer_database_max_connections
+      committer_database_table_pre_split_tablets: *committer_database_table_pre_split_tablets
       committer_database_min_connections: *committer_database_min_connections
       committer_database_retry_initial_interval: *committer_database_retry_initial_interval
       committer_database_retry_max_elapsed_time: *committer_database_retry_max_elapsed_time
@@ -1425,6 +1437,7 @@ argument_specs:
       committer_config_file: *committer_config_file
       committer_container_config_dir: *committer_container_config_dir
       committer_database_max_connections: *committer_database_max_connections
+      committer_database_table_pre_split_tablets: *committer_database_table_pre_split_tablets
       committer_database_min_connections: *committer_database_min_connections
       committer_database_retry_initial_interval: *committer_database_retry_initial_interval
       committer_database_retry_max_elapsed_time: *committer_database_retry_max_elapsed_time

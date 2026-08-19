@@ -1116,6 +1116,8 @@ Render validator configuration, DB settings, mTLS assets, and optional Kubernete
     committer_container_config_dir: /config
     # Maximum size of the committer database connection pool.
     committer_database_max_connections: 32
+    # Number of tablets to pre-split each table into, overriding the default of one per tablet server. One tablet per server spreads a table evenly but gives the server no way to work on that table in parallel, since a tablet is the unit both of placement and of concurrency. A small multiple of the server count lets each server commit to several tablets of the same table at once, at the cost of more Raft groups to maintain.
+    committer_database_table_pre_split_tablets: 120
     # Minimum size of the committer database connection pool.
     committer_database_min_connections: 8
     # Initial backoff interval for database retries.
@@ -1554,6 +1556,8 @@ Render query-service configuration, DB settings, mTLS assets, and optional Kuber
     committer_container_config_dir: /config
     # Maximum size of the committer database connection pool.
     committer_database_max_connections: 32
+    # Number of tablets to pre-split each table into, overriding the default of one per tablet server. One tablet per server spreads a table evenly but gives the server no way to work on that table in parallel, since a tablet is the unit both of placement and of concurrency. A small multiple of the server count lets each server commit to several tablets of the same table at once, at the cost of more Raft groups to maintain.
+    committer_database_table_pre_split_tablets: 120
     # Minimum size of the committer database connection pool.
     committer_database_min_connections: 8
     # Initial backoff interval for database retries.
