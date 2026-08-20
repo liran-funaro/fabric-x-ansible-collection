@@ -787,10 +787,6 @@ argument_specs:
       yugabyte_openshift_tablet_webserver_route: *yugabyte_openshift_tablet_webserver_route
       yugabyte_openshift_tablet_pgsql_web_route: *yugabyte_openshift_tablet_pgsql_web_route
       yugabyte_openshift_tablet_cql_web_route: *yugabyte_openshift_tablet_cql_web_route
-      yugabyte_tls_san_all_cluster_nodes: *yugabyte_tls_san_all_cluster_nodes
-      yugabyte_cluster:
-        <<: *yugabyte_cluster
-        required: false
 
   crypto/openssl/fetch_csr:
     short_description: Fetch a YugabyteDB TLS CSR
@@ -848,6 +844,10 @@ argument_specs:
       yugabyte_openshift_tablet_webserver_route: *yugabyte_openshift_tablet_webserver_route
       yugabyte_openshift_tablet_pgsql_web_route: *yugabyte_openshift_tablet_pgsql_web_route
       yugabyte_openshift_tablet_cql_web_route: *yugabyte_openshift_tablet_cql_web_route
+      yugabyte_tls_san_all_cluster_nodes: *yugabyte_tls_san_all_cluster_nodes
+      yugabyte_cluster:
+        <<: *yugabyte_cluster
+        required: false
 
   config/transfer:
     short_description: Transfer YugabyteDB initialization config

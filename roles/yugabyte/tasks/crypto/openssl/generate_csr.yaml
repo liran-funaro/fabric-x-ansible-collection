@@ -49,42 +49,6 @@
     - ansible_all_ipv4_addresses
       | length > 0
 
-- name: Add every cluster node's address to SAN entries
-  # A YugabyteDB smart driver with load_balance=true discovers the other nodes through
-  # yb_servers() and moves connections onto them, but it rewrites only the host, port and
-  # fallback list on the connection config -- not TLSConfig.ServerName. Under
-  # sslmode=verify-full the peer's certificate is then checked against the address of the
-  # endpoint originally dialled, and fails:
-  #
-  #   x509: certificate is valid for 10.241.64.14, not 10.241.64.10
-  #
-  # Every discovered node is marked unavailable and the client silently keeps all its
-  # connections on its first endpoint, capping the cluster at one node's SQL front end.
-  # Naming all cluster addresses in each node's certificate makes verification succeed
-  # whichever node the balancer lands on.
-  #
-  # The nodes of one cluster already share a CA and are mutually trusted peers, so this does
-  # not widen the trust boundary beyond the cluster. It does let any node within it present
-  # itself as any other, which is why it is opt-in.
-  vars:
-    current_san_entry: "IP.{{ yugabyte_openssl_san_entries | length }}:{{ current_cluster_host_ip }}"
-  ansible.builtin.set_fact:
-    yugabyte_openssl_san_entries: "{{ yugabyte_openssl_san_entries + [current_san_entry] }}"
-  loop: >-
-    {{
-      yugabyte_cluster
-      | map('extract', hostvars, 'ansible_host')
-      | unique
-      | list
-    }}
-  loop_control:
-    loop_var: current_cluster_host_ip
-    label: "{{ current_cluster_host_ip }}"
-  when:
-    - yugabyte_use_tls
-    - yugabyte_tls_san_all_cluster_nodes
-    - yugabyte_cluster is defined
-
 - name: Add Yugabyte OpenShift master webserver route to SAN entries
   ansible.builtin.set_fact:
     yugabyte_openssl_san_entries: "{{ yugabyte_openssl_san_entries + ['DNS:' + yugabyte_openshift_master_webserver_route] }}"
