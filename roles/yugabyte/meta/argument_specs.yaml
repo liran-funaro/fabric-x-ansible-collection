@@ -33,6 +33,14 @@ argument_specs:
           - The nodes of a cluster already share a CA and are mutually trusted peers, so this
             does not widen the trust boundary beyond the cluster, but it does let any node in
             it present itself as any other.
+      yugabyte_cluster_id: &yugabyte_cluster_id
+        type: str
+        description:
+          - Identifies which YugabyteDB cluster a node belongs to, so nodes of the same cluster
+            can find each other from the inventory alone.
+          - Unlike C(yugabyte_cluster) this is set on the host rather than passed to an entry
+            point, so it is available during crypto setup as well as at start.
+          - "Example: C(1)."
       yugabyte_hosts: &yugabyte_hosts
         type: list
         elements: str
@@ -845,9 +853,7 @@ argument_specs:
       yugabyte_openshift_tablet_pgsql_web_route: *yugabyte_openshift_tablet_pgsql_web_route
       yugabyte_openshift_tablet_cql_web_route: *yugabyte_openshift_tablet_cql_web_route
       yugabyte_tls_san_all_cluster_nodes: *yugabyte_tls_san_all_cluster_nodes
-      yugabyte_cluster:
-        <<: *yugabyte_cluster
-        required: false
+      yugabyte_cluster_id: *yugabyte_cluster_id
 
   config/transfer:
     short_description: Transfer YugabyteDB initialization config

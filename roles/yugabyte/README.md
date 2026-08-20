@@ -512,14 +512,8 @@ Copies the Fabric CA TLS root when needed and delegates YugabyteDB TLS enrollmen
     yugabyte_openshift_tablet_cql_web_route: "yugabyte-tablet-cql-web.apps.example.com"
     # Names every cluster node's address in each node's TLS certificate, rather than only the node's own addresses. Needed for a smart-driver client using `load_balance=true` with `sslmode=verify-full`. The driver moves a connection to a discovered node without updating the TLS server name it verifies against, so the peer's certificate is checked against the address of the endpoint first dialled and fails; the client then keeps every connection on that one endpoint and the cluster is capped at a single node's SQL front end. The nodes of a cluster already share a CA and are mutually trusted peers, so this does not widen the trust boundary beyond the cluster, but it does let any node in it present itself as any other.
     yugabyte_tls_san_all_cluster_nodes: false
-    # Lists the inventory hosts that belong to the YugabyteDB cluster.
-    yugabyte_cluster:
-      - "yb-master-1"
-      - "yb-master-2"
-      - "yb-master-3"
-      - "yb-tserver-1"
-      - "yb-tserver-2"
-      - "yb-tserver-3"
+    # Identifies which YugabyteDB cluster a node belongs to, so nodes of the same cluster can find each other from the inventory alone. Unlike `yugabyte_cluster` this is set on the host rather than passed to an entry point, so it is available during crypto setup as well as at start.
+    yugabyte_cluster_id: "1"
   ansible.builtin.include_role:
     name: hyperledger.fabricx.yugabyte
     tasks_from: crypto/fabric_ca/enroll
