@@ -54,6 +54,11 @@
     container_wait_until_running: true
     container_run_as_host_user: true
     container_wait_port: "{{ grafana_web_port }}"
+    # Wait on the address Grafana actually listens on, for the same reason the health check
+    # above resolves to it: grafana_bind_address may narrow the listener to loopback, and then
+    # nothing ever answers on actual_host, so the readiness wait burns its whole timeout and
+    # fails a Grafana that is serving. A wildcard bind keeps the previous behaviour.
+    actual_host: "{{ grafana_bind_address if grafana_bind_address not in ['0.0.0.0', '::', ''] else actual_host }}"
   ansible.builtin.include_role:
     name: hyperledger.fabricx.container
     tasks_from: start
