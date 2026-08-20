@@ -1327,6 +1327,8 @@ Render coordinator configuration, validator and verifier CA bundles, and optiona
     committer_coordinator_dep_graph_constructors: 4
     # Dependency-graph waiting transaction limit for the coordinator.
     committer_coordinator_dep_graph_wait_tx_limit: 20000000
+    # Selects the coordinator's simple dependency graph manager, which keeps the whole waiting set in a single map owned by one goroutine instead of a local constructor pool feeding a mutex-guarded global graph. It removes the lock at the cost of the local constructors' parallelism, so it helps a workload whose graph cost is lock contention rather than the per-transaction key scan.
+    committer_coordinator_dep_graph_use_simple_manager: false
     # Per-goroutine channel buffer size for the coordinator.
     committer_coordinator_per_channel_buffer_size_per_goroutine: 10
     # Log format emitted by the committer component.

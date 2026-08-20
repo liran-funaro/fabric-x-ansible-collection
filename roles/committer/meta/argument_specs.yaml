@@ -589,6 +589,17 @@ argument_specs:
         description:
           - Dependency-graph constructor count for the coordinator.
           - "Example: C(4)."
+      committer_coordinator_dep_graph_use_simple_manager:
+        &committer_coordinator_dep_graph_use_simple_manager
+        type: bool
+        default: false
+        description:
+          - Selects the coordinator's simple dependency graph manager, which keeps the whole
+            waiting set in a single map owned by one goroutine instead of a local constructor
+            pool feeding a mutex-guarded global graph.
+          - It removes the lock at the cost of the local constructors' parallelism, so it helps
+            a workload whose graph cost is lock contention rather than the per-transaction key
+            scan.
       committer_coordinator_dep_graph_wait_tx_limit:
         &committer_coordinator_dep_graph_wait_tx_limit
         type: int
@@ -1365,6 +1376,7 @@ argument_specs:
       committer_container_config_dir: *committer_container_config_dir
       committer_coordinator_dep_graph_constructors: *committer_coordinator_dep_graph_constructors
       committer_coordinator_dep_graph_wait_tx_limit: *committer_coordinator_dep_graph_wait_tx_limit
+      committer_coordinator_dep_graph_use_simple_manager: *committer_coordinator_dep_graph_use_simple_manager
       committer_coordinator_per_channel_buffer_size_per_goroutine: *committer_coordinator_per_channel_buffer_size_per_goroutine
       committer_log_format: *committer_log_format
       committer_log_level: *committer_log_level
