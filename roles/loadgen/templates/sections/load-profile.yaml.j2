@@ -119,13 +119,19 @@ load-profile:
         {{ current_namespace.id }}:
           # Signature scheme ("ECDSA", "EDDSA", "BLS" or "NONE").
           scheme: {{ loadgen_key_scheme | default('ECDSA') }}
-          # How to find/generate the signature keys.
+{% if (loadgen_key_scheme | default('ECDSA')) == 'ECDSA' %}
+          # How to find/generate the signature keys. Only offered for ECDSA, because the key
+          # below is the MSP signing key the Fabric CA issued and that is an ECDSA P-256 key.
+          # Handing it to another scheme's signer fails on the first signature, e.g.
+          # "signing failed: ed25519: bad private key length: 227", so every other scheme
+          # takes the synthetic key pair the load generator derives from its seed instead.
           key-path:
 {% set namespace_user = (organization.users | first) %}
             # Path to the signing key.
             signing-key: {{ loadgen_config_dir }}/users/{{ namespace_user.name }}@{{ organization.domain }}/msp/keystore/priv_sk
             # Path to the signing certificate.
             sign-certificate: {{ loadgen_config_dir }}/users/{{ namespace_user.name }}@{{ organization.domain }}/msp/signcerts/{{ namespace_user.name }}@{{ organization.domain }}-cert.pem
+{% endif %}
 {% endfor %}
 {% endif %}
 {% if loadgen_generate_config_block %}
