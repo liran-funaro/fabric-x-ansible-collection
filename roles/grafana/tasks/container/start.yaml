@@ -12,6 +12,20 @@
       GF_SERVER_HTTP_PORT: "{{ grafana_web_port | string }}"
       GF_SERVER_HTTP_ADDR: "{{ grafana_bind_address }}"
 
+- name: Set the Grafana home dashboard
+  # Grafana's landing page is its own "Welcome" dashboard, which is of no use to anyone opening
+  # this deployment: they are here for the pipeline. Naming a provisioned dashboard file makes it
+  # the landing page for every user in the organization, so a fresh browser lands on the metrics
+  # rather than on a search box.
+  vars:
+    grafana_home_dashboard_env:
+      GF_USERS_DEFAULT_HOME_DASHBOARD_PATH: >-
+        {{ grafana_container_config_dir }}/dashboards/{{ grafana_default_home_dashboard_file }}
+  ansible.builtin.set_fact:
+    grafana_env: "{{ grafana_env | combine(grafana_home_dashboard_env) }}"
+  when:
+    - grafana_default_home_dashboard_file | default('') | length > 0
+
 - name: Set Grafana environment variables for TLS
   vars:
     grafana_tls_env:

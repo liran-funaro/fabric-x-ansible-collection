@@ -169,6 +169,14 @@ argument_specs:
         default: 3000
         description:
           - Sets the Grafana web port.
+      grafana_default_home_dashboard_file: &grafana_default_home_dashboard_file
+        type: str
+        description:
+          - Filename of a provisioned dashboard to serve as the landing page, resolved inside the
+            dashboards directory Grafana provisions from.
+          - Unset leaves Grafana's own welcome dashboard, which shows a search box rather than the
+            deployment's metrics.
+          - "Example: C(fabric-x-committer-dashboard.json)."
       grafana_bind_address: &grafana_bind_address
         type: str
         default: 0.0.0.0
@@ -330,6 +338,7 @@ argument_specs:
       grafana_password: *grafana_password
       grafana_web_port: *grafana_web_port
       grafana_bind_address: *grafana_bind_address
+      grafana_default_home_dashboard_file: *grafana_default_home_dashboard_file
       grafana_remote_config_dir: *grafana_remote_config_dir
       remote_config_dir: *remote_config_dir
       grafana_container_config_dir: *grafana_container_config_dir
