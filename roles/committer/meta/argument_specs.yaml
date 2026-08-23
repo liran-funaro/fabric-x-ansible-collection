@@ -468,6 +468,20 @@ argument_specs:
             that table in parallel, since a tablet is the unit both of placement and of
             concurrency. A small multiple of the server count lets each server commit to several
             tablets of the same table at once, at the cost of more Raft groups to maintain.
+          - >-
+            Raising this also costs read throughput, and steeply. YugabyteDB batches a multi-key
+            lookup (C(WHERE key = ANY($1)), which the validator issues for every batch containing
+            blind writes) into one request per tablet only while tablets multiplied by keys per
+            lookup stays below roughly 32768. Above that it issues one storage read request PER
+            KEY, serially. On a twelve-server cluster, 120 tablets took that lookup from 93 ms to
+            6.3 s per batch and dropped throughput from 314000 to 13000 transactions per second,
+            while being worth 35 percent on a workload that only inserts new keys.
+          - >-
+            The effect is invisible on an insert-only benchmark, because nothing then performs a
+            multi-key lookup, and the query plan is a correct primary-key index scan either way.
+            Only C(Storage Read Requests) in C(EXPLAIN (ANALYZE, DIST)) shows it. Check it at the
+            real batch width before raising this, and note that narrowing the committed batch
+            keeps the batching just as well as lowering the tablet count.
           - "Example: C(120)."
       committer_database_endpoint_hosts: &committer_database_endpoint_hosts
         type: list
