@@ -134,8 +134,13 @@ load-profile:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if loadgen_generate_config_block %}
+{% if loadgen_generate_config_block and (orderer_router_hosts | default([]) | length > 0 or orderer_assembler_hosts | default([]) | length > 0) %}
     # Orderer endpoint specifications for transaction submission.
+    # Only rendered when there are orderer hosts to name. loadgen_generate_config_block also
+    # asks the load generator to submit a config transaction during its setup phase, which a
+    # deployment without an ordering service still needs -- it is how the coordinator learns the
+    # namespace policies it verifies signatures against. Gating the endpoints on the flag alone
+    # made those two uses inseparable and rendered an empty list here.
     # Format: id=<num>,msp-id=<org>,broadcast,deliver,<host>:<port>
     # Capabilities: 'broadcast' (submit txs), 'deliver' (receive blocks).
     orderer-endpoints:
