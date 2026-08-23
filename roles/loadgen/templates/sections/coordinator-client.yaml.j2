@@ -1,0 +1,38 @@
+{% if loadgen_coordinator_host is defined %}
+# ---------------------------------------------------------------------------
+# Coordinator Client Settings
+# ---------------------------------------------------------------------------
+# The presence of this section selects the coordinator adapter, which submits batches
+# straight to the coordinator's BlockProcessing stream and reads their statuses back
+# from it. The sidecar and the ordering service are both out of the path, so what is
+# measured is the coordinator with its verifiers, validator-committers and database,
+# and nothing in front of them.
+#
+# Use this to find one component's own ceiling. A deployment measured end to end
+# reports the slowest stage, and once two stages are close, the end-to-end number
+# cannot say which of them is the limit.
+coordinator-client:
+  # Endpoint of the coordinator's gRPC service. Format: host:port.
+  endpoint: {{ hostvars[loadgen_coordinator_host].ansible_host }}:{{ hostvars[loadgen_coordinator_host].committer_rpc_port }}
+{% if (hostvars[loadgen_coordinator_host].committer_use_tls is defined) and hostvars[loadgen_coordinator_host].committer_use_tls %}
+  # Define TLS options and certificate paths used for secure communication between the
+  # loadgen and the coordinator.
+  tls:
+    # List of paths to CA certificate files for verifying server certificates.
+    ca-cert-paths:
+      - {{ loadgen_config_dir }}/tls/coordinator/ca.crt
+{% if (hostvars[loadgen_coordinator_host].committer_use_mtls is defined) and hostvars[loadgen_coordinator_host].committer_use_mtls %}
+    # Path to the client's TLS private key file.
+    key-path: {{ loadgen_config_dir }}/tls/server.key
+    # Path to the client's TLS certificate file (public key) for authentication.
+    cert-path: {{ loadgen_config_dir }}/tls/server.crt
+    # TLS mode for coordinator client connections: 'none' (no TLS), 'tls' (server auth
+    # only), or 'mtls' (mutual TLS with client cert verification).
+    mode: mtls
+{% else %}
+    # TLS mode for coordinator client connections: 'none' (no TLS), 'tls' (server auth
+    # only), or 'mtls' (mutual TLS with client cert verification).
+    mode: tls
+{% endif %}
+{% endif %}
+{% endif %}

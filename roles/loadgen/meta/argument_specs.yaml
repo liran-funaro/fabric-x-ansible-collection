@@ -558,6 +558,15 @@ argument_specs:
         description:
           - Sidecar host targeted by the orderer and sidecar clients.
           - "Example: C(committer-sidecar1)."
+      loadgen_coordinator_host: &loadgen_coordinator_host
+        type: str
+        description:
+          - Coordinator host to apply load to directly, taking the sidecar and the ordering
+            service out of the path so the coordinator's own ceiling can be measured.
+          - Setting it selects the coordinator adapter in place of the sidecar adapter.
+          - Use it when an end-to-end measurement cannot say which of two close stages is the
+            limit, since an end-to-end run only ever reports the slowest one.
+          - "Example: C(committer-coordinator)."
       k8s_namespace: &k8s_namespace
         type: str
         description:
@@ -770,6 +779,7 @@ argument_specs:
       loadgen_config_dir: *loadgen_config_dir
       loadgen_config_file: *loadgen_config_file
       loadgen_use_bin: *loadgen_use_bin
+      loadgen_coordinator_host: *loadgen_coordinator_host
       loadgen_use_k8s: *loadgen_use_k8s
       loadgen_use_openshift: *loadgen_use_openshift
       loadgen_use_tls: *loadgen_use_tls

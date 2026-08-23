@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-{% if loadgen_use_mock_orderer %}
+{% include './sections/coordinator-client.yaml.j2' %}
+{% if loadgen_use_mock_orderer and loadgen_coordinator_host is not defined %}
 # ---------------------------------------------------------------------------
 # Sidecar Client Settings
 # ---------------------------------------------------------------------------
