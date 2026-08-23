@@ -1,0 +1,51 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Make a provisioned dashboard the organization's landing page.
+#
+# GF_USERS_DEFAULT_HOME_DASHBOARD_PATH is the documented way to do this and it does not work
+# here: Grafana logs the override, reads the file happily, and still serves its built-in Home.
+# The organization preference is honoured, and it is also the more durable choice, since it
+# refers to the dashboard by identity rather than by a path inside the container.
+#
+# Provisioning is asynchronous -- the provider rescans on an interval -- so the dashboard is not
+# in the search index the instant the container is up, hence the retries.
+- name: Set the Grafana organization home dashboard
+  when:
+    - grafana_home_dashboard_title | default('') | length > 0
+  block:
+    - name: Find the dashboard to use as the home dashboard
+      ansible.builtin.uri:
+        url: "{{ grafana_api_url }}/api/search?type=dash-db&query={{ grafana_home_dashboard_title | urlencode }}"
+        method: GET
+        url_username: "{{ grafana_username }}"
+        url_password: "{{ grafana_password }}"
+        force_basic_auth: true
+        validate_certs: false
+      register: grafana_home_dashboard_search
+      until:
+        - grafana_home_dashboard_search.json | default([]) | selectattr('title', '==', grafana_home_dashboard_title) | list | length > 0
+      retries: 30
+      delay: 2
+
+    - name: Point the organization's home dashboard at it
+      ansible.builtin.uri:
+        url: "{{ grafana_api_url }}/api/org/preferences"
+        method: PUT
+        body_format: json
+        body:
+          homeDashboardUID: >-
+            {{
+              grafana_home_dashboard_search.json
+              | selectattr('title', '==', grafana_home_dashboard_title)
+              | map(attribute='uid')
+              | first
+            }}
+        url_username: "{{ grafana_username }}"
+        url_password: "{{ grafana_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        status_code: [200]

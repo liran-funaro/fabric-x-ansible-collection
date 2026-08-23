@@ -14,6 +14,7 @@
   - [fetch\_logs](#fetch_logs)
   - [ping](#ping)
   - [container/start](#containerstart)
+  - [config/set\_home\_dashboard](#configset_home_dashboard)
   - [container/stop](#containerstop)
   - [container/rm](#containerrm)
   - [container/fetch\_logs](#containerfetch_logs)
@@ -193,8 +194,6 @@ Starts the containerized Grafana deployment with the generated datasource and da
     grafana_web_port: 3000
     # Sets the address Grafana listens on. Defaults to `0.0.0.0`, Grafana's own default, which is reachable from anywhere the host firewall and cloud security group allow. Set to `127.0.0.1` to restrict Grafana to the loopback interface, so it is reachable only from the host itself or through an SSH tunnel. Recommended whenever the host is internet-facing, since the admin credentials come from `grafana_username` and `grafana_password` and are often left at their sample values.
     grafana_bind_address: 0.0.0.0
-    # Filename of a provisioned dashboard to serve as the landing page, resolved inside the dashboards directory Grafana provisions from. Unset leaves Grafana's own welcome dashboard, which shows a search box rather than the deployment's metrics.
-    grafana_default_home_dashboard_file: "fabric-x-committer-dashboard.json"
     # Sets the remote directory that stores Grafana provisioning files and TLS material.
     grafana_remote_config_dir: "{{ remote_config_dir }}"
     # Sets the shared remote config root used by Grafana. Required when using it for `grafana_remote_config_dir`.
@@ -210,6 +209,34 @@ Starts the containerized Grafana deployment with the generated datasource and da
   ansible.builtin.include_role:
     name: hyperledger.fabricx.grafana
     tasks_from: container/start
+```
+
+### config/set_home_dashboard
+
+> Make a provisioned dashboard the Grafana landing page
+
+Finds a provisioned dashboard by title and sets it as the organization's home dashboard, so a fresh browser lands on the deployment's metrics. Retries the lookup, because dashboard provisioning is asynchronous and the dashboard is not in the search index the moment Grafana starts. Does nothing when grafana_home_dashboard_title is unset.
+
+```yaml
+- name: Make a provisioned dashboard the Grafana landing page
+  vars:
+    # Title of a provisioned dashboard to make the organization's landing page, so a fresh browser lands on the deployment's metrics rather than on Grafana's welcome page. Matched against the dashboard's title rather than a file path or UID, because the title is the part a reader recognises and it does not change when a dashboard is re-exported. Applied through Grafana's organization preferences. The documented `default_home_dashboard_path` setting is not used, because Grafana accepts it, logs it, reads the file, and still serves its built-in home dashboard.
+    grafana_home_dashboard_title: "Fabric-X-Committer Performance Dashboard"
+    # Base URL for Grafana's own HTTP API, used to apply the home dashboard preference. Defaults to the address Grafana listens on, so it resolves when the listener is narrowed to loopback.
+    grafana_api_url: "{{ (grafana_use_tls | default(false)) | ternary('https', 'http') }}://{{ (grafana_bind_address in ['0.0.0.0', '::', '']) | ternary('localhost', grafana_bind_address) }}:{{ grafana_web_port }}"
+    # Sets the Grafana admin username.
+    grafana_username: "admin"
+    # Sets the Grafana admin password. Store this value in Ansible Vault.
+    grafana_password: "my_grafana_password"
+    # Enables Grafana TLS handling.
+    grafana_use_tls: false
+    # Sets the address Grafana listens on. Defaults to `0.0.0.0`, Grafana's own default, which is reachable from anywhere the host firewall and cloud security group allow. Set to `127.0.0.1` to restrict Grafana to the loopback interface, so it is reachable only from the host itself or through an SSH tunnel. Recommended whenever the host is internet-facing, since the admin credentials come from `grafana_username` and `grafana_password` and are often left at their sample values.
+    grafana_bind_address: 0.0.0.0
+    # Sets the Grafana web port.
+    grafana_web_port: 3000
+  ansible.builtin.include_role:
+    name: hyperledger.fabricx.grafana
+    tasks_from: config/set_home_dashboard
 ```
 
 ### container/stop

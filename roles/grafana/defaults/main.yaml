@@ -35,6 +35,9 @@ grafana_tls_private_key_file: server.key
 grafana_tls_cert_file: server.crt
 # Sets the Grafana web port.
 grafana_web_port: 3000
+# Base URL for Grafana's own HTTP API, used to apply the home dashboard preference.
+# Defaults to the address Grafana listens on, so it resolves when the listener is narrowed to loopback.
+grafana_api_url: "{{ (grafana_use_tls | default(false)) | ternary('https', 'http') }}://{{ (grafana_bind_address in ['0.0.0.0', '::', '']) | ternary('localhost', grafana_bind_address) }}:{{ grafana_web_port }}"
 # Sets the address Grafana listens on.
 # Defaults to C(0.0.0.0), Grafana's own default, which is reachable from anywhere the host firewall and cloud security group allow.
 # Set to C(127.0.0.1) to restrict Grafana to the loopback interface, so it is reachable only from the host itself or through an SSH tunnel. Recommended whenever the host is internet-facing, since the admin credentials come from C(grafana_username) and C(grafana_password) and are often left at their sample values.
