@@ -169,14 +169,24 @@ argument_specs:
         default: 3000
         description:
           - Sets the Grafana web port.
-      grafana_default_home_dashboard_file: &grafana_default_home_dashboard_file
+      grafana_home_dashboard_title: &grafana_home_dashboard_title
         type: str
         description:
-          - Filename of a provisioned dashboard to serve as the landing page, resolved inside the
-            dashboards directory Grafana provisions from.
-          - Unset leaves Grafana's own welcome dashboard, which shows a search box rather than the
-            deployment's metrics.
-          - "Example: C(fabric-x-committer-dashboard.json)."
+          - Title of a provisioned dashboard to make the organization's landing page, so a fresh
+            browser lands on the deployment's metrics rather than on Grafana's welcome page.
+          - Matched against the dashboard's title rather than a file path or UID, because the
+            title is the part a reader recognises and it does not change when a dashboard is
+            re-exported.
+          - "Applied through Grafana's organization preferences. The documented
+            C(default_home_dashboard_path) setting is not used, because Grafana accepts it, logs
+            it, reads the file, and still serves its built-in home dashboard."
+          - "Example: C(Fabric-X-Committer Performance Dashboard)."
+      grafana_api_url: &grafana_api_url
+        type: str
+        description:
+          - Base URL for Grafana's own HTTP API, used to apply the home dashboard preference.
+          - Defaults to the address Grafana listens on, so it resolves when the listener is
+            narrowed to loopback.
       grafana_bind_address: &grafana_bind_address
         type: str
         default: 0.0.0.0
@@ -338,13 +348,24 @@ argument_specs:
       grafana_password: *grafana_password
       grafana_web_port: *grafana_web_port
       grafana_bind_address: *grafana_bind_address
-      grafana_default_home_dashboard_file: *grafana_default_home_dashboard_file
       grafana_remote_config_dir: *grafana_remote_config_dir
       remote_config_dir: *remote_config_dir
       grafana_container_config_dir: *grafana_container_config_dir
       grafana_use_tls: *grafana_use_tls
       grafana_tls_private_key_file: *grafana_tls_private_key_file
       grafana_tls_cert_file: *grafana_tls_cert_file
+
+  config/set_home_dashboard:
+    short_description: Make a provisioned dashboard the Grafana landing page
+    description:
+      - "Finds a provisioned dashboard by title and sets it as the organization's home dashboard, so a fresh browser lands on the deployment's metrics."
+      - "Retries the lookup, because dashboard provisioning is asynchronous and the dashboard is not in the search index the moment Grafana starts."
+      - "Does nothing when grafana_home_dashboard_title is unset."
+    options:
+      grafana_home_dashboard_title: *grafana_home_dashboard_title
+      grafana_api_url: *grafana_api_url
+      grafana_username: *grafana_username
+      grafana_password: *grafana_password
 
   container/stop:
     short_description: Stop the Grafana container
