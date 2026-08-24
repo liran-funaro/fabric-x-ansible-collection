@@ -68,6 +68,14 @@ argument_specs:
         default: committer
         description:
           - Binary name managed by the committer role.
+      committer_bin_env: &committer_bin_env
+        type: dict
+        default: {}
+        description:
+          - Environment variables exported for the committer process in host-binary mode.
+          - Ignored in container, Kubernetes, and OpenShift modes.
+          - Set per host to tune one component only, for example the Go garbage collector on the sidecar.
+          - "Example: C({'GOGC': '400'})."
       committer_db_init_timeout: &committer_db_init_timeout
         type: str
         default: 5m
@@ -1275,6 +1283,7 @@ argument_specs:
       - C(committer_component_type) selects the CLI subcommand and, for the sidecar, the data directory and a longer wait timeout.
     options:
       committer_bin_name: *committer_bin_name
+      committer_bin_env: *committer_bin_env
       committer_component_type: *committer_component_type
       committer_config_file: *committer_config_file
       committer_remote_config_dir: *committer_remote_config_dir

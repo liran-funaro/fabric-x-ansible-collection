@@ -1078,6 +1078,8 @@ Run the binary for the selected committer component with its generated configura
   vars:
     # Binary name managed by the committer role.
     committer_bin_name: committer
+    # Environment variables exported for the committer process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune one component only, for example the Go garbage collector on the sidecar.
+    committer_bin_env: {}
     # Committer component handled by the entry point.
     committer_component_type: "coordinator"
     # Generated config file name used by the selected component.
