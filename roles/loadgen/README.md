@@ -1254,8 +1254,6 @@ Publish the rendered Loadgen configuration and trusted CA bundles as a Kubernete
     loadgen_config_block_file: config-block.pb.bin
     # Sidecar host targeted by the orderer and sidecar clients.
     committer_sidecar_host: "committer-sidecar1"
-    # Coordinator host to apply load to directly, taking the sidecar and the ordering service out of the path so the coordinator's own ceiling can be measured. Setting it selects the coordinator adapter in place of the sidecar adapter. Use it when an end-to-end measurement cannot say which of two close stages is the limit, since an end-to-end run only ever reports the slowest one.
-    loadgen_coordinator_host: "committer-coordinator"
     # Enable mTLS for the main endpoint.
     loadgen_use_mtls: false
     # Enable mTLS for the monitoring endpoint.
