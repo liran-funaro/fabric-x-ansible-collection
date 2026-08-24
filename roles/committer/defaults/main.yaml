@@ -29,6 +29,10 @@ committer_source_code_package: cmd/committer
 committer_bin_package: '{{ committer_git_hub_url }}/{{ committer_git_repo }}/{{ committer_source_code_package }}'
 # Binary name managed by the committer role.
 committer_bin_name: committer
+# Environment variables exported for the committer process in host-binary mode.
+# Ignored in container, Kubernetes, and OpenShift modes.
+# Set per host to tune one component only, for example the Go garbage collector on the sidecar.
+committer_bin_env: {}
 # Enable host-binary deployment mode.
 committer_use_bin: false
 # Enable Kubernetes deployment mode.
