@@ -187,6 +187,8 @@ Starts the containerized Grafana deployment with the generated datasource and da
     grafana_username: "admin"
     # Sets the Grafana admin password. Store this value in Ansible Vault.
     grafana_password: "my_grafana_password"
+    # Additional `GF_*` environment variables passed to the Grafana container, merged over the ones the role sets. Container deployments only. Use for Grafana settings the role does not model, for example anonymous access on a deployment that is reachable only through an SSH tunnel. Review each value against the deployment's exposure before setting it; several `GF_AUTH_*` settings remove authentication.
+    grafana_extra_env: {}
     # Sets the Grafana web port.
     grafana_web_port: 3000
     # Sets the remote directory that stores Grafana provisioning files and TLS material.
