@@ -262,6 +262,15 @@ argument_specs:
           - Sets the Grafana admin password.
           - "Example: C(my_grafana_password)."
           - Store this value in Ansible Vault.
+      grafana_extra_env: &grafana_extra_env
+        type: dict
+        default: {}
+        description:
+          - Additional C(GF_*) environment variables passed to the Grafana container, merged over the ones the role sets.
+          - Container deployments only.
+          - Use for Grafana settings the role does not model, for example anonymous access on a deployment that is reachable only through an SSH tunnel.
+          - "Example: C({'GF_AUTH_ANONYMOUS_ENABLED': 'true'})."
+          - Review each value against the deployment's exposure before setting it; several C(GF_AUTH_*) settings remove authentication.
 
       grafana_use_openshift: &grafana_use_openshift
         type: bool
@@ -347,6 +356,7 @@ argument_specs:
       grafana_image_tag: *grafana_image_tag
       grafana_username: *grafana_username
       grafana_password: *grafana_password
+      grafana_extra_env: *grafana_extra_env
       grafana_web_port: *grafana_web_port
       grafana_bind_address: *grafana_bind_address
       grafana_remote_config_dir: *grafana_remote_config_dir

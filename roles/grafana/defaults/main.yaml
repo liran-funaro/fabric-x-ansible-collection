@@ -60,5 +60,10 @@ grafana_k8s_fs_group: 472
 # Set to C(true) to create a LoadBalancer Service entry that exposes the web port externally.
 # When undefined or C(false), the web port is not included in the LoadBalancer Service.
 grafana_k8s_loadbalancer_expose_web_port: false
+# Additional C(GF_*) environment variables passed to the Grafana container, merged over the ones the role sets.
+# Container deployments only.
+# Use for Grafana settings the role does not model, for example anonymous access on a deployment that is reachable only through an SSH tunnel.
+# Review each value against the deployment's exposure before setting it; several C(GF_AUTH_*) settings remove authentication.
+grafana_extra_env: {}
 # Selects the OpenShift deployment branch.
 grafana_use_openshift: false

@@ -23,6 +23,15 @@
   when:
     - grafana_use_tls
 
+# Merged last so an operator setting wins over the role's own, which is the point of an
+# override; it also means grafana_extra_env can change GF_SERVER_PROTOCOL and the health
+# check below would then probe the wrong scheme, so use grafana_use_tls for that.
+- name: Apply extra Grafana environment variables
+  ansible.builtin.set_fact:
+    grafana_env: "{{ grafana_env | combine(grafana_extra_env) }}"
+  when:
+    - grafana_extra_env | length > 0
+
 - name: Start Grafana container
   vars:
     container_name: "{{ grafana_container_name }}"
