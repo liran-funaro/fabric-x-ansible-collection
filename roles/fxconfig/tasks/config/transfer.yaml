@@ -39,6 +39,7 @@
   ansible.builtin.set_fact:
     fxconfig_committer_query_service_address: "{{ hostvars[committer_query_service_host].committer_openshift_route }}:{{ fxconfig_committer_query_service_openshift_route_port }}"
   when:
+    - fxconfig_has_query_service
     - hostvars[committer_query_service_host].committer_use_openshift is defined
     - hostvars[committer_query_service_host].committer_use_openshift
     - hostvars[committer_query_service_host].committer_openshift_route is defined
@@ -61,6 +62,7 @@
   ansible.builtin.set_fact:
     fxconfig_committer_query_service_address: "{{ hostvars[committer_query_service_host].actual_host }}:{{ hostvars[committer_query_service_host].committer_k8s_rpc_node_port }}"
   when:
+    - fxconfig_has_query_service
     - hostvars[committer_query_service_host].committer_openshift_route is not defined
     - hostvars[committer_query_service_host].committer_k8s_rpc_node_port is defined
 
@@ -74,7 +76,11 @@
       }}
     fxconfig_default_orderer_address: "{{ hostvars[orderer_router_host].actual_host }}:{{ hostvars[orderer_router_host].orderer_rpc_port }}"
     fxconfig_effective_orderer_address: "{{ fxconfig_orderer_address | default(fxconfig_default_orderer_address) }}"
-    fxconfig_default_committer_query_service_address: "{{ hostvars[committer_query_service_host].actual_host }}:{{ hostvars[committer_query_service_host].committer_rpc_port }}"
+    fxconfig_default_committer_query_service_address: >-
+      {{
+        (hostvars[committer_query_service_host].actual_host ~ ':' ~ hostvars[committer_query_service_host].committer_rpc_port)
+        if fxconfig_has_query_service else ''
+      }}
     fxconfig_effective_committer_query_service_address: "{{ fxconfig_committer_query_service_address | default(fxconfig_default_committer_query_service_address) }}"
     fxconfig_default_committer_sidecar_address: "{{ hostvars[committer_sidecar_host].actual_host }}:{{ hostvars[committer_sidecar_host].committer_rpc_port }}"
     fxconfig_effective_committer_sidecar_address: "{{ fxconfig_committer_sidecar_address | default(fxconfig_default_committer_sidecar_address) }}"

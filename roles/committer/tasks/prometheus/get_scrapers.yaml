@@ -57,7 +57,11 @@
     committer_coordinator_ref_host: "{{ committer_coordinator_hosts | first }}"
     committer_verifier_ref_host: "{{ committer_verifier_hosts | first }}"
     committer_validator_ref_host: "{{ committer_validator_hosts | first }}"
-    committer_query_service_ref_host: "{{ committer_query_service_hosts | first }}"
+    # The only optional component: a committer deployment without a query service is normal,
+    # and `first` raises on an empty sequence, so this stays empty and the job below is
+    # appended only when there is something to scrape.
+    committer_query_service_ref_host: >-
+      {{ committer_query_service_hosts | first if committer_query_service_hosts else '' }}
     committer_scrape_services:
       - job_name: "sidecar_service.{{ hostvars[committer_sidecar_ref_host].organization.domain }}"
         use_tls: "{{ hostvars[committer_sidecar_ref_host].committer_monitoring_use_tls | default(hostvars[committer_sidecar_ref_host].committer_use_tls) | default(false) }}"
@@ -87,6 +91,7 @@
         targets:
           - hosts: "{{ committer_validator_hosts }}"
             port_to_scrape: committer_metrics_port
+    committer_query_service_scrape_services:
       - job_name: "query_service.{{ hostvars[committer_query_service_ref_host].organization.domain }}"
         use_tls: "{{ hostvars[committer_query_service_ref_host].committer_monitoring_use_tls | default(hostvars[committer_query_service_ref_host].committer_use_tls) | default(false) }}"
         use_mtls: "{{ hostvars[committer_query_service_ref_host].committer_monitoring_use_mtls | default(hostvars[committer_query_service_ref_host].committer_use_mtls) | default(false) }}"
@@ -95,4 +100,9 @@
           - hosts: "{{ committer_query_service_hosts }}"
             port_to_scrape: committer_metrics_port
   ansible.builtin.set_fact:
-    committer_prometheus_scrape_services: "{{ (committer_prometheus_scrape_services | default([])) + committer_scrape_services }}"
+    committer_prometheus_scrape_services: >-
+      {{
+        (committer_prometheus_scrape_services | default([]))
+        + committer_scrape_services
+        + (committer_query_service_scrape_services if committer_query_service_hosts else [])
+      }}

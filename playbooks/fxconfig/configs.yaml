@@ -46,7 +46,12 @@
                 | sort
                 | first
               }}
-            committer_query_service_host: >-
+            # Empty when no query service is deployed, which is a supported topology: the
+            # committer runs without one, and fxconfig only needs it to answer queries, not to
+            # submit the namespace envelopes this playbook is here for. `first` raises on an
+            # empty sequence, so the selection is kept as a list and reduced conditionally --
+            # everything downstream guards on this being non-empty.
+            committer_query_service_hosts: >-
               {{
                 reference_committer_hosts
                 | map('extract', hostvars)
@@ -55,8 +60,9 @@
                 | map(attribute='inventory_hostname')
                 | sort
                 | list
-                | first
               }}
+            committer_query_service_host: >-
+              {{ committer_query_service_hosts | first if committer_query_service_hosts else '' }}
             committer_sidecar_host: >-
               {{
                 reference_committer_hosts
