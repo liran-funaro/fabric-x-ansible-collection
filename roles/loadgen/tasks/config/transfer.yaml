@@ -40,6 +40,31 @@
         | list
         | first
       }}
+    # The endpoint lists the rendered load profile iterates over: every router is somewhere to
+    # broadcast transactions and every assembler is somewhere to receive blocks from. The k8s
+    # start path builds the same two lists (tasks/k8s/start.yaml); without them here, the
+    # binary and container paths render a load generator with no orderer to submit to.
+    #
+    # Like orderer_ref_host above, these are only evaluated when the template dereferences
+    # them, which it does in the real-orderer branch alone -- so a deployment whose load
+    # generator embeds the mock orderer, and which therefore has no orderer_hosts, never
+    # resolves them.
+    orderer_router_hosts: >-
+      {{
+        orderer_hosts
+        | map('extract', hostvars)
+        | selectattr('orderer_component_type', '==', 'router')
+        | map(attribute='inventory_hostname')
+        | list
+      }}
+    orderer_assembler_hosts: >-
+      {{
+        orderer_hosts
+        | map('extract', hostvars)
+        | selectattr('orderer_component_type', '==', 'assembler')
+        | map(attribute='inventory_hostname')
+        | list
+      }}
   block:
     - name: Ensure the Hyperledger Fabric-X Loadgen config directory exists
       ansible.builtin.file:
