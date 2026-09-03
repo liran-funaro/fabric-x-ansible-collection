@@ -36,7 +36,10 @@ orderer:
 {% endif %}
 {% endif %}
 
-# Query service configuration
+{% if fxconfig_has_query_service %}
+# Query service configuration. Omitted entirely when the deployment has no query service:
+# fxconfig submits namespace envelopes through the orderer and reads results through the
+# sidecar's notification service, so it has nothing to ask a query service for.
 queries:
   address: {{ fxconfig_effective_committer_query_service_address }}
   connectionTimeout: {{ fxconfig_committer_query_service_connection_timeout | default('30s') }}
@@ -49,6 +52,7 @@ queries:
 {% if hostvars[committer_query_service_host].committer_use_mtls is defined and hostvars[committer_query_service_host].committer_use_mtls %}
     clientCert: {{ fxconfig_config_dir }}/mtls/server.crt
     clientKey: {{ fxconfig_config_dir }}/mtls/server.key
+{% endif %}
 {% endif %}
 {% endif %}
 

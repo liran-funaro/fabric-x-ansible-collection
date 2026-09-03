@@ -332,8 +332,10 @@ Copies fetched Orderer Router and Committer Query-Service CA certificates into t
 ```yaml
 - name: Transfer fxconfig TLS trust material
   vars:
-    # Identifies the inventory host for the Committer Query-Service endpoint consumed by fxconfig.
+    # Identifies the inventory host for the Committer Query-Service endpoint consumed by fxconfig. Leave empty when the deployment has no query service: fxconfig submits its namespace envelopes through the orderer and reads the outcome from the sidecar's notification service, so the `queries` section is omitted from the rendered configuration.
     committer_query_service_host: "committer-query-service"
+    # Reports whether a Committer Query-Service host was named, and gates every task and template section that would otherwise dereference an empty host. Derived from `committer_query_service_host`; set it rather than this.
+    fxconfig_has_query_service: "{{ (committer_query_service_host | default('')) | length > 0 }}"
     # Defines the local directory that stores fetched crypto and TLS artifacts consumed by fxconfig.
     fetched_artifacts_dir: "/tmp/fabricx/config-build"
     # Defines the fxconfig remote configuration directory.
@@ -360,8 +362,10 @@ Creates the remote fxconfig configuration directory, renders the fxconfig file, 
     channel_id: "mychannel"
     # Defines the Committer Query-Service connection timeout written into the rendered fxconfig file.
     fxconfig_committer_query_service_connection_timeout: "45s"
-    # Identifies the inventory host for the Committer Query-Service endpoint consumed by fxconfig.
+    # Identifies the inventory host for the Committer Query-Service endpoint consumed by fxconfig. Leave empty when the deployment has no query service: fxconfig submits its namespace envelopes through the orderer and reads the outcome from the sidecar's notification service, so the `queries` section is omitted from the rendered configuration.
     committer_query_service_host: "committer-query-service"
+    # Reports whether a Committer Query-Service host was named, and gates every task and template section that would otherwise dereference an empty host. Derived from `committer_query_service_host`; set it rather than this.
+    fxconfig_has_query_service: "{{ (committer_query_service_host | default('')) | length > 0 }}"
     # Defines the Committer Sidecar notification connection timeout written into the rendered fxconfig file.
     fxconfig_committer_sidecar_connection_timeout: "45s"
     # Identifies the inventory host for the Committer Sidecar notification endpoint consumed by fxconfig.
