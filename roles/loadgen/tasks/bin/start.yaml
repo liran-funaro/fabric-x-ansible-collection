@@ -9,6 +9,7 @@
     bin_command: >-
       {{ loadgen_bin_name }} start
       --config={{ loadgen_remote_config_dir }}/{{ loadgen_config_file }}
+    bin_env: "{{ loadgen_bin_env }}"
     bin_wait_until_running: true
     bin_wait_port: "{{ loadgen_metrics_port }}"
   ansible.builtin.include_role:
