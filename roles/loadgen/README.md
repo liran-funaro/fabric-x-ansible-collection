@@ -708,6 +708,8 @@ Build the `loadgen` binary from the configured Fabric-X source repository. Uses 
   vars:
     # Binary name used by the shared bin role.
     loadgen_bin_name: loadgen
+    # Environment variables exported for the load generator process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising `GOGC` recovers most of the difference.
+    loadgen_bin_env: {}
     # Git host used for binary builds.
     loadgen_git_hub_url: github.com
     # Git repository that provides the Loadgen source.
@@ -732,6 +734,8 @@ Install the `loadgen` binary through the shared binary helper role. Consumes the
   vars:
     # Binary name used by the shared bin role.
     loadgen_bin_name: loadgen
+    # Environment variables exported for the load generator process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising `GOGC` recovers most of the difference.
+    loadgen_bin_env: {}
     # Go package used for binary installation.
     loadgen_bin_package: "{{ loadgen_git_hub_url }}/{{ loadgen_git_repo }}/{{ loadgen_source_code_package }}"
     # Git host used for binary builds.
@@ -758,6 +762,8 @@ Remove the installed `loadgen` binary managed by the shared binary helper role. 
   vars:
     # Binary name used by the shared bin role.
     loadgen_bin_name: loadgen
+    # Environment variables exported for the load generator process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising `GOGC` recovers most of the difference.
+    loadgen_bin_env: {}
   ansible.builtin.include_role:
     name: hyperledger.fabricx.loadgen
     tasks_from: bin/rm
@@ -880,6 +886,8 @@ Start Loadgen as a local binary process using the rendered config file. Waits on
   vars:
     # Binary name used by the shared bin role.
     loadgen_bin_name: loadgen
+    # Environment variables exported for the load generator process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising `GOGC` recovers most of the difference.
+    loadgen_bin_env: {}
     # Remote config directory used by Loadgen.
     loadgen_remote_config_dir: "{{ remote_config_dir }}"
     # Base remote config directory that feeds `loadgen_remote_config_dir`.
@@ -917,6 +925,8 @@ Transfer a prebuilt `loadgen` binary through the shared binary helper role. Used
   vars:
     # Binary name used by the shared bin role.
     loadgen_bin_name: loadgen
+    # Environment variables exported for the load generator process in host-binary mode. Ignored in container, Kubernetes, and OpenShift modes. Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising `GOGC` recovers most of the difference.
+    loadgen_bin_env: {}
   ansible.builtin.include_role:
     name: hyperledger.fabricx.loadgen
     tasks_from: bin/transfer

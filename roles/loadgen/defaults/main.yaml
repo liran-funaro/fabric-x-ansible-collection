@@ -45,6 +45,10 @@ loadgen_source_code_package: cmd/loadgen
 loadgen_bin_package: '{{ loadgen_git_hub_url }}/{{ loadgen_git_repo }}/{{ loadgen_source_code_package }}'
 # Binary name used by the shared bin role.
 loadgen_bin_name: loadgen
+# Environment variables exported for the load generator process in host-binary mode.
+# Ignored in container, Kubernetes, and OpenShift modes.
+# Set per host to tune the generator alone. The Go garbage collector is the usual reason: ECDSA signing allocates about 6 KB and 59 objects per signature against Ed25519's 184 B and 4, so a generator forced onto ECDSA by a namespace policy is limited by collection rather than by cryptography, and raising C(GOGC) recovers most of the difference.
+loadgen_bin_env: {}
 # Enable TLS for the main endpoint.
 loadgen_use_tls: false
 # Enable mTLS for the main endpoint.
