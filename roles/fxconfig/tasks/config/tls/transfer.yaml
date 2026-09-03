@@ -28,6 +28,7 @@
 # =========================
 - name: Transfer the Hyperledger Fabric-X Committer Query-Service TLS certificate to trust
   when:
+    - fxconfig_has_query_service
     - hostvars[committer_query_service_host].committer_use_tls is defined
     - hostvars[committer_query_service_host].committer_use_tls
   block:

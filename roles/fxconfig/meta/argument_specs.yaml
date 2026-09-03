@@ -23,10 +23,19 @@ argument_specs:
           - "Example: C(45s)."
       committer_query_service_host: &committer_query_service_host
         type: str
-        required: true
         description:
           - "Identifies the inventory host for the Committer Query-Service endpoint consumed by fxconfig."
+          - "Leave empty when the deployment has no query service: fxconfig submits its namespace
+             envelopes through the orderer and reads the outcome from the sidecar's notification
+             service, so the C(queries) section is omitted from the rendered configuration."
           - "Example: C(committer-query-service)."
+      fxconfig_has_query_service: &fxconfig_has_query_service
+        type: bool
+        default: "{{ (committer_query_service_host | default('')) | length > 0 }}"
+        description:
+          - "Reports whether a Committer Query-Service host was named, and gates every task and
+             template section that would otherwise dereference an empty host."
+          - "Derived from C(committer_query_service_host); set it rather than this."
       fxconfig_committer_sidecar_connection_timeout:
         &fxconfig_committer_sidecar_connection_timeout
         type: str
@@ -386,6 +395,7 @@ argument_specs:
       - "Inventory hosts named by the endpoint variables must expose connection metadata, RPC ports, and TLS flags."
     options:
       committer_query_service_host: *committer_query_service_host
+      fxconfig_has_query_service: *fxconfig_has_query_service
       fetched_artifacts_dir: *fetched_artifacts_dir
       fxconfig_remote_config_dir: *fxconfig_remote_config_dir
       orderer_router_host: *orderer_router_host
@@ -401,6 +411,7 @@ argument_specs:
       channel_id: *channel_id
       fxconfig_committer_query_service_connection_timeout: *fxconfig_committer_query_service_connection_timeout
       committer_query_service_host: *committer_query_service_host
+      fxconfig_has_query_service: *fxconfig_has_query_service
       fxconfig_committer_sidecar_connection_timeout: *fxconfig_committer_sidecar_connection_timeout
       committer_sidecar_host: *committer_sidecar_host
       fxconfig_committer_sidecar_waiting_timeout: *fxconfig_committer_sidecar_waiting_timeout
