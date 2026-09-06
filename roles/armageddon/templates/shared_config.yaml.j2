@@ -67,6 +67,6 @@ Batching:
         SecondStrikeThreshold: 10s
         AutoRemoveTimeout: 10s
     BatchSize:
-        MaxMessageCount: 10000
+        MaxMessageCount: {{ armageddon_batch_max_message_count | default(10000) }}
         AbsoluteMaxBytes: 10485760
     RequestMaxBytes: 1048576
