@@ -85,6 +85,11 @@ dependency-graph:
   # This limit indirectly controls memory utilization. When reached, the
   # coordinator applies backpressure to upstream services.
   waiting-txs-limit: {{ committer_coordinator_dep_graph_wait_tx_limit | default(20000000) }}
+  # Maximum transactions in one dependency-graph chunk. This also bounds the keys in one
+  # downstream multi-key state lookup: YugabyteDB batches those per tablet only while
+  # tablets x keys stays under about 32,768, and issues one storage read per key above it, so a
+  # wide chunk on a heavily pre-split table can cross that threshold.
+  chunk-size: {{ committer_coordinator_dep_graph_chunk_size | default(500) }}
   # Select the simple dependency graph manager, which holds the whole waiting set in one map
   # owned by a single goroutine rather than a local constructor pool feeding a mutex-guarded
   # global graph. Worth trying when the coordinator's graph stages read as busy while its

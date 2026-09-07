@@ -611,6 +611,17 @@ argument_specs:
         description:
           - Dependency-graph constructor count for the coordinator.
           - "Example: C(4)."
+      committer_coordinator_dep_graph_chunk_size:
+        &committer_coordinator_dep_graph_chunk_size
+        type: int
+        description:
+          - Maximum transactions the coordinator processes as one dependency-graph chunk.
+          - The chunk width also bounds the keys in one downstream multi-key state lookup, and
+            YugabyteDB batches such a lookup per tablet only while the tablet count times the key
+            count stays under about 32,768; above that it issues one storage read per key. So a
+            wide chunk on a table with many tablets can cross that threshold, and narrowing the
+            chunk restores batching without giving up the write concurrency more tablets buy.
+          - "Example: C(500)."
       committer_coordinator_dep_graph_use_simple_manager:
         &committer_coordinator_dep_graph_use_simple_manager
         type: bool
@@ -1399,6 +1410,7 @@ argument_specs:
       committer_container_config_dir: *committer_container_config_dir
       committer_coordinator_dep_graph_constructors: *committer_coordinator_dep_graph_constructors
       committer_coordinator_dep_graph_wait_tx_limit: *committer_coordinator_dep_graph_wait_tx_limit
+      committer_coordinator_dep_graph_chunk_size: *committer_coordinator_dep_graph_chunk_size
       committer_coordinator_dep_graph_use_simple_manager: *committer_coordinator_dep_graph_use_simple_manager
       committer_coordinator_per_channel_buffer_size_per_goroutine: *committer_coordinator_per_channel_buffer_size_per_goroutine
       committer_log_format: *committer_log_format
