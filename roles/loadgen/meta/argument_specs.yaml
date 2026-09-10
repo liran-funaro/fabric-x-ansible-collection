@@ -511,6 +511,14 @@ argument_specs:
           - Number of cut blocks the embedded mock orderer buffers between the workload submitting them and the sidecar fetching them, which bounds the transactions in flight.
           - "The mock orderer's own default buffers tens of millions of transactions, so an overloaded committer is absorbed rather than felt: the submitted rate stays at the configured rate while only the committed rate shows the real drain rate, and end-to-end latency grows past anything the latency histogram can represent. Keep this a small multiple of C(committer_sidecar_waiting_txs_limit) divided by the block size so saturation shows up as a drop in the submitted rate."
           - "Example: C(64)."
+      loadgen_mock_orderer_fast_block_prepare: &loadgen_mock_orderer_fast_block_prepare
+        type: bool
+        default: false
+        description:
+          - Hash a block's data on the goroutine that assembles it rather than on the embedded mock orderer's single block-preparing goroutine, and let that orderer prepare a block in place rather than deep-cloning one the adapter built for it alone.
+          - "It changes what limits the load generator, not what the committer receives: the blocks delivered are identical. At 500 transactions a block, preparation otherwise costs 0.75 ms and caps the generator near 850 blocks a second, so a small-block measurement reports the generator's ceiling rather than the committer's."
+          - Off by default, so a measurement taken with it is never silently compared against one taken without it.
+          - "Example: C(true)."
       loadgen_mock_orderer_port: &loadgen_mock_orderer_port
         type: int
         default: 7050
@@ -849,6 +857,7 @@ argument_specs:
       genesis_config_block_path: *genesis_config_block_path
       use_mock_orderer: *use_mock_orderer
       loadgen_use_mock_orderer: *loadgen_use_mock_orderer
+      loadgen_mock_orderer_fast_block_prepare: *loadgen_mock_orderer_fast_block_prepare
       loadgen_mock_orderer_port: *loadgen_mock_orderer_port
       loadgen_mock_orderer_out_block_capacity: *loadgen_mock_orderer_out_block_capacity
       remote_data_dir: *remote_data_dir
@@ -1009,6 +1018,7 @@ argument_specs:
       loadgen_container_artifacts_dir: *loadgen_container_artifacts_dir
       loadgen_artifacts_dir: *loadgen_artifacts_dir
       loadgen_config_block_file: *loadgen_config_block_file
+      loadgen_mock_orderer_fast_block_prepare: *loadgen_mock_orderer_fast_block_prepare
       loadgen_mock_orderer_port: *loadgen_mock_orderer_port
       loadgen_peer_organization_count: *loadgen_peer_organization_count
       channel_id: *channel_id

@@ -39,6 +39,13 @@ sidecar-client:
   # the latency histogram can represent. Keep it a small multiple of the sidecar's
   # waiting-txs-limit so saturation shows up as a drop in the submitted rate.
   out-block-capacity: {{ loadgen_mock_orderer_out_block_capacity }}
+  # Hash a block's data on the goroutine that assembles it rather than on the mock orderer's single
+  # block-preparing goroutine, and let that orderer prepare a block in place instead of deep-cloning
+  # one this adapter built for it alone. It changes what limits the generator, not what the committer
+  # receives -- the blocks delivered are identical. At 500 transactions a block, preparation otherwise
+  # costs 0.75 ms and caps the generator near 850 blocks a second, so a small-block measurement is the
+  # generator's ceiling rather than the committer's.
+  fast-block-prepare: {{ loadgen_mock_orderer_fast_block_prepare | bool | lower }}
 {% else %}
 # ---------------------------------------------------------------------------
 # Orderer Client Settings
