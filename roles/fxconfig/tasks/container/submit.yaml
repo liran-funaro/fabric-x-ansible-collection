@@ -25,7 +25,7 @@
       submit
       {{ fxconfig_container_config_dir }}/to_submit/ns.json
       --config={{ fxconfig_container_config_dir }}/{{ fxconfig_config_file }}
-      --wait
+      {{ '--wait' if fxconfig_tx_submit_wait | bool else '' }}
     container_volumes:
       - "{{ fxconfig_remote_config_dir }}:{{ fxconfig_container_config_dir }}:z,ro"
     container_run_detach_mode: false

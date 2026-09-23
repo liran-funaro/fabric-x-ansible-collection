@@ -16,6 +16,15 @@ fxconfig_artifacts_dir: '{{ config_build_dir }}/fxconfig-artifacts'
 fxconfig_bin_name: fxconfig
 # Defines the Go package path used to install fxconfig.
 fxconfig_bin_package: '{{ fxconfig_git_hub_url }}/{{ fxconfig_git_repo }}/{{ fxconfig_source_code_package }}'
+# Waits for the submitted transaction's status before returning.
+#
+# The wait needs the committer's notification stream, and fxconfig and the committer can disagree about
+# it: fabric-x-common folded the standalone C(committerpb.Notifier) service into
+# C(committerpb.SidecarService) as C(OpenNotificationStream), and fxconfig up to v1.0.2 and main still
+# dials C(committerpb.Notifier). Against a committer built after the rename the submit fails with
+# "unknown service committerpb.Notifier" and then "context deadline exceeded", having already submitted
+# the transaction. Set this false there and verify the namespace with a list instead.
+fxconfig_tx_submit_wait: true
 # Defines the fxconfig configuration filename.
 fxconfig_config_file: fxconfig.yaml
 # Defines the configuration directory mounted inside the fxconfig container.
